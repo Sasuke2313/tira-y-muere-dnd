@@ -196,16 +196,22 @@ function simular(){
    let vidaRest=party.reduce((sum,p)=>sum+Math.max(0,p.hp),0);
    party.forEach(p=>{ porPJ[p.idx].sumHP+=Math.max(0,p.hp); porPJ[p.idx].sumDano+=p.danoRec; if(!p.vivo) porPJ[p.idx].muertes++; });
    rondasL.push(ronda); vidaL.push(vidaRest); derL.push(der); capL.push(cap); danoL.push(danoTot); if(obj==="capturar") capPor[cap]=(capPor[cap]||0)+1;
- }
+}
  let winPct=(wins/sims*100).toFixed(1), losePct=((sims-wins)/sims*100).toFixed(1); let rondasMed=(rondasL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let vidaMed=(vidaL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let derMed=(derL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let capMed=(capL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let danoMed=(danoL.reduce((a,b)=>a+b,0)/sims).toFixed(1);
  document.getElementById('win').textContent=winPct+'%'; document.getElementById('lose').textContent=losePct+'%'; document.getElementById('rondas').textContent=rondasMed; document.getElementById('vidaRest').textContent=vidaMed; document.getElementById('derrotados').textContent=derMed; document.getElementById('capturados').textContent=capMed; document.getElementById('danoRecibido').textContent=danoMed;
  let nomModo={optimo:'Óptimo',normal:'Normal',relajados:'Relajados',mosca:'¡Uh! Una Mosca'}[modo];
- document.getElementById('frase').textContent='Modo '+nomModo+' - Pool ('+act.length+' peleando) vs '+cant+' '+nombre+'(s): ganas el '+winPct+'% y te mueres el '+losePct+'%.'+(caosActivo?' 🎰 Caos cayó '+caosCount+' veces en '+sims+' (VERDE 100).':'');
+ let pctCaos = (caosCount/sims*100).toFixed(2);
+ let fraseCaos = '';
+ if(caosActivo){
+   if(pctCaos < 1) fraseCaos = ' 🎰 Caos no se activó.';
+   else fraseCaos = ' 🎰 Caos '+caosCount+' de '+sims+' ('+pctCaos+'%) - Sí se activó.';
+ }
+ document.getElementById('frase').textContent='Modo '+nomModo+' - Pool ('+act.length+' peleando) vs '+cant+' '+nombre+'(s): ganas el '+winPct+'% y te mueres el '+losePct+'%.'+fraseCaos;
  let tabla='<table class="tabla"><tr><th>Personaje</th><th>HP inicial</th><th>HP con el que queda</th><th>Daño que le hacen</th><th>Veces que murió</th></tr>';
  porPJ.forEach(p=>{ tabla+='<tr><td><b>'+p.name+'</b></td><td>'+p.hp0+'</td><td>'+(p.sumHP/sims).toFixed(1)+'</td><td>'+(p.sumDano/sims).toFixed(1)+'</td><td>'+p.muertes+' / '+sims+'</td></tr>'; });
  tabla+='</table><div style="font-size:12px;color:#5a3a1a;margin-top:6px">Grupo: quedas con '+vidaMed+' HP en total, te hacen '+danoMed+' de daño en total. Es promedio de '+sims.toLocaleString()+' peleas.</div>';
  let htmlCap=''; if(obj==="capturar"){ htmlCap='<div style="margin-top:12px;background:#fff8d6;padding:10px;border-radius:8px;border:1px solid #c9a227"><b>🎯 ¿Cuántos atrapas?</b><br>'; for(let i=cant;i>=0;i--){ let pct=((capPor[i]||0)/sims*100).toFixed(1); htmlCap+='Atrapas '+i+' de '+cant+': <b>'+pct+'%</b><br>'; } htmlCap+='</div>'; }
- let htmlCaos=''; if(caosActivo){ htmlCaos='<div style="margin-top:12px;background:#eaffea;padding:10px;border-radius:8px;border:1px solid #0a7a2a"><b>🎰 Ruleta Caos:</b> Tiraste d100 en cada pelea. Verde = 100. Cayó verde <b>'+caosCount+' veces</b> de '+sims+' ('+(caosCount/sims*100).toFixed(2)+'%). Cuando cae verde pasa: meteorito, muere un enemigo, muere alguien de tu party, o aparece un aliado.</div>'; }
+ let htmlCaos=''; if(caosActivo){ if(pctCaos < 1){ htmlCaos='<div style="margin-top:12px;background:#eaffea;padding:10px;border-radius:8px;border:1px solid #0a7a2a"><b>🎰 Ruleta Caos:</b> Tiraste en '+sims.toLocaleString()+' peleas. El Caos salió '+caosCount+' veces ('+pctCaos+'%). Para que pase el Caos tiene que llegar a 1%. No llegó, no pasa nada.</div>'; } else { htmlCaos='<div style="margin-top:12px;background:#eaffea;padding:10px;border-radius:8px;border:1px solid #0a7a2a"><b>🎰 Ruleta Caos:</b> Tiraste en '+sims.toLocaleString()+' peleas. El Caos salió '+caosCount+' veces ('+pctCaos+'%). Llegó al 1%. Sí pasa el Caos.</div>'; } }
  document.getElementById('resultado').innerHTML='<div><b>Resultado en modo '+nomModo+':</b> Tu Pool peleó contra <b>'+cant+' '+nombre+'(s)</b> '+sims.toLocaleString()+' veces.</div><div style="margin-top:8px">Ganas <b>'+winPct+'%</b>, pierdes <b>'+losePct+'%</b>. Dura <b>'+rondasMed+' rondas</b>, te quedas con <b>'+vidaMed+' HP</b>.</div>'+tabla+htmlCap+htmlCaos;
 }
 </script>
