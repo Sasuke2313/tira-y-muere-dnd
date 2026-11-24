@@ -387,6 +387,7 @@ const MODOS_JUGADOR = [
   { valor: "mosca", etiqueta: "🪰 Uh! Una Mosca - Cada quien por su lado" }
 ];
 let probsJugador = {};
+let ultimoVoto = null;
 function encodeState(){
   const estado = {
     players: players,
@@ -445,14 +446,29 @@ function cambiarObjetivoJugador(){
   }, 50);
 }
 function votar(accion){
-  const modoSel = document.getElementById('modoJugador').value;
-  const prob = probsJugador[modoSel] || 0;
-  document.getElementById('voto-msg').textContent = accion === 'pelear' ? "⚔️ Votaste PELEAR con " + prob + "% en modo " + modoSel + ". Suerte..." : "🏃 Votaste HUIR con " + prob + "% en modo " + modoSel + ". Buena decisión.";
+  ultimoVoto = accion;
+  const nuevoObj = accion === 'pelear' ? 'derrotar' : 'huir';
+  const oj = document.getElementById('objetivoJugador');
+  if(oj) oj.value = nuevoObj;
+  document.getElementById('objetivo').value = nuevoObj;
+  document.getElementById('lista-modos').textContent = 'Recalculando con tu voto...';
+  setTimeout(()=>{
+    probsJugador = {};
+    MODOS_JUGADOR.forEach(m => { probsJugador[m.valor] = simular(m.valor, true); });
+    let html = "<b>Si juegan así, tienen:</b><br>";
+    MODOS_JUGADOR.forEach(m => { html += m.etiqueta + ": <b>" + probsJugador[m.valor] + "%</b><br>"; });
+    document.getElementById('lista-modos').innerHTML = html;
+    actualizarProbJugador();
+    const modoSel = document.getElementById('modoJugador').value;
+    const prob = probsJugador[modoSel] || 0;
+    document.getElementById('voto-msg').textContent = accion === 'pelear' ? "⚔️ Votaste PELEAR - Si pelean, tienen " + prob + "% en modo " + modoSel + "." : "🏃 Votaste HUIR - Si huyen, tienen " + prob + "% de escapar en modo " + modoSel + ".";
+  }, 50);
 }
 function compartirWhatsApp(){
   const modoSel = document.getElementById('modoJugador').value;
   const prob = probsJugador[modoSel] || 0;
-  const texto = "Nos salió " + prob + "% de sobrevivir en modo " + modoSel + " ¿huimos o qué? Voten aquí: " + window.location.href;
+  const votoTxt = ultimoVoto ? " Yo voté " + (ultimoVoto === 'pelear' ? "PELEAR ⚔️" : "HUIR 🏃") + " con " + prob + "%." : " Aún no voto.";
+  const texto = "En Tira y Muere nos salió " + prob + "% en modo " + modoSel + "." + votoTxt + " ¿huimos o qué? Voten aquí: " + window.location.href;
   window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
 }
 function initVista(){
