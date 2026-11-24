@@ -189,6 +189,8 @@
 
 <script>
 let caosActivo=false;
+function guardarTodo(){ if(new URLSearchParams(window.location.search).get("modo")==="jugador") return; try{ localStorage.setItem('tiraYMuere_v1', JSON.stringify({players:players, enemyPool:enemyPool, caos:caosActivo})); }catch(e){} }
+function cargarTodo(){ try{ let g=localStorage.getItem('tiraYMuere_v1'); if(!g) return; let d=JSON.parse(g); if(d.players) players=d.players; if(d.enemyPool) enemyPool=d.enemyPool; if(d.caos!==undefined) caosActivo=d.caos; }catch(e){} }
 function toggleCaos(){ caosActivo=!caosActivo; let b=document.getElementById('chaosBtn'); let l=document.getElementById('chaosLabel'); b.classList.toggle('on',caosActivo); b.textContent=caosActivo?'ON':'CAOS'; l.textContent=caosActivo?'CAOS: ON':'CAOS'; document.getElementById('frase').textContent=caosActivo?'🎰 Caos prendido: en 1 de cada 100 peleas pasa algo loco.':'Caos apagado. Pelea normal.'; }
 function tirarDado(c){return Math.floor(Math.random()*c)+1;}
 function parseDano(s){ s=(s||"1d6").toLowerCase().replace(/\s/g,''); let b=0; if(s.includes('+')){let p=s.split('+'); s=p[0]; b=parseInt(p[1])||0;} if(s.includes('-')){let p=s.split('-'); s=p[0]; b=-(parseInt(p[1])||0);} let m=s.match(/(\d*)d(\d+)/); if(!m) return {n:1,caras:6,bonus:0}; return {n:parseInt(m[1])||1,caras:parseInt(m[2]),bonus:b}; }
@@ -203,6 +205,7 @@ const partyPresets=[
 let players=JSON.parse(JSON.stringify(partyPresets)); let currentPlayer=0;
 let enemyPool=[{name:"Bandido",hp:18,ca:12,bono:4,dano:"1d6+2",ataques:1,cant:8,objetivo:"derrotar",etiqueta:"🏘️ La Vecindad"},{name:"Jabalí",hp:35,ca:13,bono:5,dano:"2d6+2",ataques:1,cant:3,objetivo:"capturar",etiqueta:"🐗 La Cacería"}];
 let currentEnemyPool=1;
+cargarTodo();
 function renderPool(){
  let h=""; players.forEach((p,i)=>{ h+='<div class="pool-item"><input type="checkbox" '+(p.activo?"checked":"")+' onchange="players['+i+'].activo=this.checked;renderPool();showPlayer('+currentPlayer+')"><b>'+p.name+' - HP '+p.hp+' | CA '+p.ca+' | '+p.clase+'</b><button type="button" onclick="showPlayer('+i+')">Editar</button><button type="button" onclick="eliminarPersonaje('+i+')">✕</button></div>'; });
  document.getElementById('poolList').innerHTML=h;
@@ -211,6 +214,7 @@ function renderPool(){
  let selPool=document.getElementById('enemigoPoolSelect'); if(selPool){ selPool.innerHTML=enemyPool.map((e,i)=>'<option value="'+i+'">'+(e.etiqueta||e.name)+' - '+e.name+' HP '+e.hp+' CA '+e.ca+'</option>').join(''); selPool.value=String(currentEnemyPool); }
  document.getElementById('enemyPoolList').innerHTML="<div style='font-size:13px;color:#5a3a1a;margin-top:6px'><b>Pool de Enemigos:</b> "+enemyPool.map(e=>e.name).join(" • ")+"</div>";
 }
+  guardarTodo();
 function activarTodos(v){ players.forEach(p=>p.activo=v); renderPool(); showPlayer(currentPlayer); }
 function eliminarPersonaje(i){ if(players.length<=1){alert("No puedes borrar al último.");return;} if(!confirm("¿Borrar a "+players[i].name+" del pool?")) return; players.splice(i,1); currentPlayer=0; renderPool(); showPlayer(0); }
 function agregarPersonajeManual(){ let n=prompt("Nombre del nuevo personaje:",""); if(!n) return; players.push({name:n.toUpperCase(),apodo:"Nuevo",clase:"Guerrero 1",raza:"Humano",hp:12,ca:14,bono:3,dano:"1d8+2",ataques:1,dot:0,fue:14,des:12,con:13,int:10,sab:11,car:10,historia:"Nuevo personaje creado a mano.",activo:true}); currentPlayer=players.length-1; renderPool(); showPlayer(currentPlayer); }
