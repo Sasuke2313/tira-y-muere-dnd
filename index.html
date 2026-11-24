@@ -125,6 +125,8 @@
     <div id="partyInfo" style="font-size:13px;color:#5a3a1a;margin-top:10px"></div>
     <div id="playerFields"></div>
     <div style="font-size:13px;color:#5a3a1a;margin-top:10px">La simulación usa solo a los palomeados. El total de HP es la suma de los activos.</div>
+    <label>¿Cuál es el objetivo de la party?</label>
+    <select id="objetivo"><option value="derrotar">Derrotar a todos</option><option value="capturar">Capturar - intentar atrapar cuando tenga poca vida</option><option value="huir">Huir - escapar vivo, sin tener que ganar la pelea</option><option value="sobrevivir">Sobrevivir - aguantar 5 rondas hasta que llegue ayuda</option></select>
   </div>
   <div class="seccion">
     <h3>🐗 El Enemigo</h3>
@@ -143,8 +145,8 @@
       <div><label>Daño del enemigo (ej: 2d6+2)</label><input type="text" id="enemigoDano" value="2d6+2"></div>
       <div><label>Ataques por turno del enemigo</label><input type="number" id="enemigoAtaques" value="1" min="1" max="4"></div>
     </div>
-    <label>¿Cuál es tu objetivo?</label>
-    <select id="objetivo"><option value="derrotar">Derrotar a todos</option><option value="capturar">Capturar - intentar atrapar cuando tenga poca vida</option><option value="huir">Huir - escapar vivo, sin tener que ganar la pelea</option><option value="sobrevivir">Sobrevivir - aguantar 5 rondas hasta que llegue ayuda</option></select>
+    <label>¿Qué quiere el enemigo?</label>
+    <select id="objetivoEnemigo"><option value="derrotar">Derrotar a la party</option><option value="impedir_huir">Impedir que huyan</option><option value="aguantar">Aguantar hasta que llegue ayuda</option></select>
   </div>
   <label>Número de simulaciones:</label>
   <input type="number" id="simulaciones" value="10000" min="100" max="20000">
@@ -181,6 +183,13 @@
     <option value="normal" selected>😐 Normal - Como siempre</option>
     <option value="relajados">😌 Relajado - Andamos valiendo madre</option>
     <option value="mosca">🪰 Uh! Una Mosca - Cada quien por su lado</option>
+  </select>
+  <label style="text-align:left">¿Cuál es el objetivo de la party?</label>
+  <select id="objetivoJugador" onchange="cambiarObjetivoJugador()">
+    <option value="derrotar">Derrotar a todos</option>
+    <option value="capturar">Capturar - intentar atrapar cuando tenga poca vida</option>
+    <option value="huir">Huir - escapar vivo, sin tener que ganar la pelea</option>
+    <option value="sobrevivir">Sobrevivir - aguantar 5 rondas hasta que llegue ayuda</option>
   </select>
   <div class="lista-modos" id="lista-modos">Calculando...</div>
   <div class="btn-fila">
@@ -389,7 +398,8 @@ function encodeState(){
       bono: document.getElementById('enemigoBono').value,
       dano: document.getElementById('enemigoDano').value,
       ataques: document.getElementById('enemigoAtaques').value,
-      objetivo: document.getElementById('objetivo').value
+      objetivo: document.getElementById('objetivo').value,
+      objetivoEnemigo: document.getElementById('objetivoEnemigo') ? document.getElementById('objetivoEnemigo').value : 'derrotar'
     },
     sims: document.getElementById('simulaciones').value,
     caos: caosActivo
@@ -420,6 +430,20 @@ function actualizarProbJugador(){
   else reco = "🔴 HUYAN - Nos van a hacer mierda";
   document.getElementById('reco-jugador').textContent = reco;
 }
+function cambiarObjetivoJugador(){
+  const oj = document.getElementById('objetivoJugador');
+  if(!oj) return;
+  document.getElementById('objetivo').value = oj.value;
+  document.getElementById('lista-modos').textContent = 'Recalculando con nuevo objetivo...';
+  setTimeout(()=>{
+    probsJugador = {};
+    MODOS_JUGADOR.forEach(m => { probsJugador[m.valor] = simular(m.valor, true); });
+    let html = "<b>Si juegan así, tienen:</b><br>";
+    MODOS_JUGADOR.forEach(m => { html += m.etiqueta + ": <b>" + probsJugador[m.valor] + "%</b><br>"; });
+    document.getElementById('lista-modos').innerHTML = html;
+    actualizarProbJugador();
+  }, 50);
+}
 function votar(accion){
   const modoSel = document.getElementById('modoJugador').value;
   const prob = probsJugador[modoSel] || 0;
@@ -448,6 +472,8 @@ function initVista(){
       document.getElementById('enemigoDano').value = estado.enemigo.dano;
       document.getElementById('enemigoAtaques').value = estado.enemigo.ataques;
       document.getElementById('objetivo').value = estado.enemigo.objetivo;
+      if(estado.enemigo.objetivoEnemigo && document.getElementById('objetivoEnemigo')) document.getElementById('objetivoEnemigo').value = estado.enemigo.objetivoEnemigo;
+      if(document.getElementById('objetivoJugador')) document.getElementById('objetivoJugador').value = estado.enemigo.objetivo;
     }
     if(estado.sims) document.getElementById('simulaciones').value = estado.sims;
     if(estado.caos !== undefined) caosActivo = estado.caos;
