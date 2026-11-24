@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tira y Muere - Simulador de Combate D&D 5e</title>
+<meta property="og:title" content="👹 TIRA Y MUERE - ¿Peleas o Huyes?" />
+<meta property="og:description" content="Te topaste con algo... ¿Cuál es tu probabilidad de sobrevivir? Elige cómo vas a jugar y decide." />
+<meta property="og:type" content="website" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   body{font-family:Georgia,serif;margin:0;padding:20px;color:#2b1a0e;background-color:#1a0f08;background-image:radial-gradient(circle at 15% 10%, rgba(255,170,40,.35) 0, rgba(255,170,40,0) 35%),radial-gradient(circle at 85% 10%, rgba(255,170,40,.35) 0, rgba(255,170,40,0) 35%),repeating-linear-gradient(90deg, #3a2413 0 42px, #2e1a0e 42px 44px, #432c1a 44px 86px)}
@@ -42,9 +45,20 @@
   #chaosBtn{width:62px;height:62px;padding:0;margin:0;border-radius:50%;background:#2b1a0e;color:#f5e6c8;border:3px solid #c9a227;font-size:14px;font-weight:bold;letter-spacing:0;text-transform:none;box-shadow:0 4px 15px rgba(0,0,0,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;clip-path:polygon(50% 0%, 90% 25%, 90% 75%, 50% 100%, 10% 75%, 10% 25%)}
   #chaosBtn.on{background:#0a7a2a;border-color:#7dff9a;box-shadow:0 0 18px #2dff6a}
   #chaosLabel{font-family:Georgia,serif;font-size:12px;font-weight:bold;color:#f5e6c8;background:#2b1a0e;border:1px solid #c9a227;border-radius:20px;padding:3px 10px;margin-top:4px;display:inline-block}
+  /* VISTA JUGADOR */
+  #vista-jugador{display:none;max-width:850px;margin:50px auto 20px;background:#f5e6c8;padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.6), inset 0 0 0 3px #c9a227, inset 0 0 0 6px #f5e6c8, inset 0 0 0 8px #8b5a1a;text-align:center}
+  #vista-jugador h2{color:#4a1a00;margin:0 0 6px}
+  #prob-jugador{font-size:52px;color:#6b1a00;margin:10px 0;line-height:1}
+  #prob-jugador small{display:block;font-size:16px;color:#5a3a1a;margin-top:6px}
+  #reco-jugador{padding:14px;background:#2b1a0e;color:#f5e6c8;border:1px solid #c9a227;border-radius:10px;font-weight:bold;font-size:18px;margin-top:14px}
+  .btn-jugador{width:100%;padding:14px;margin-top:12px;background:#6b1a00;color:#f5e6c8;border:2px solid #c9a227;border-radius:10px;font-size:18px;font-weight:bold;cursor:pointer;text-transform:uppercase;letter-spacing:1px}
+  .btn-jugador.sec{background:#2b1a0e}
+  .btn-fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .lista-modos{text-align:left;background:rgba(255,255,255,.55);border:1px solid #c9a227;border-radius:10px;padding:12px;margin-top:14px;font-size:14px;line-height:1.8}
 </style>
 </head>
 <body>
+<div id="vista-dm">
 <div class="card">
   <h1>⚔️ Tira y Muere ⚔️</h1>
   <div class="subtitle"><b>Tira y Muere</b> es un simulador de combate para D&D 5e que utiliza el método Monte Carlo para evaluar un encuentro antes de jugarlo. Configura combatientes, enemigos y condiciones, y el sistema simula el mismo combate 10,000 veces para estimar la probabilidad de victoria, derrota, duración y resultados por objetivo.</div>
@@ -118,6 +132,8 @@
   <label>Número de simulaciones:</label>
   <input type="number" id="simulaciones" value="10000" min="100" max="20000">
   <button onclick="simular()">⚔️ ¡TIRA LOS DADOS! ⚔️</button>
+  <button type="button" class="preset-btn" style="margin-top:12px" onclick="copiarLinkJugador()">🔗 Copiar Link para Jugadores - Pégalo en Discord</button>
+  <div id="link-copiado" style="display:none;font-size:13px;color:#6b1a00;margin-top:8px;text-align:center;font-weight:bold">¡Copiado! Pégalo en Discord / WhatsApp. Ellos solo verán el % y los 4 modos, sin stats.</div>
   <div id="frase">Aquí te voy a decir cuántas veces te mueres si peleas esto.</div>
   <div class="stats">
     <div class="stat"><span>Prob. de Ganar</span><b id="win">-</b></div>
@@ -133,6 +149,31 @@
   <div id="resultado"></div>
   <div style="text-align:center;margin-top:18px;font-size:12px;color:#5a3a1a">Christian Lagunes - Licencia MIT</div>
 </div>
+</div>
+
+<div id="vista-jugador">
+  <h1>⚔️ Tira y Muere ⚔️</h1>
+  <h2>👹 Te topaste con algo...</h2>
+  <p style="color:#5a3a1a;font-style:italic">Tu DM ya armó el encuentro. Tú solo ves tu probabilidad, no los stats del monstruo.</p>
+  <div id="prob-jugador">--%<small>de sobrevivir</small></div>
+  <div id="reco-jugador">¿Peleas o Huyes?</div>
+  <label style="text-align:left">¿Cómo van a jugar?</label>
+  <select id="modoJugador" onchange="actualizarProbJugador()">
+    <option value="optimo">⚔️ Óptimo - Jugamos bien</option>
+    <option value="normal" selected>😐 Normal - Como siempre</option>
+    <option value="relajados">😌 Relajado - Andamos valiendo madre</option>
+    <option value="mosca">🪰 Mosca - Cada quien por su lado</option>
+  </select>
+  <div class="lista-modos" id="lista-modos">Calculando...</div>
+  <div class="btn-fila">
+    <button class="btn-jugador" onclick="votar('pelear')">⚔️ Pelear</button>
+    <button class="btn-jugador sec" onclick="votar('huir')">🏃 Huir</button>
+  </div>
+  <button class="btn-jugador sec" onclick="compartirWhatsApp()">📱 Compartir en WhatsApp</button>
+  <div id="voto-msg" style="margin-top:12px;font-weight:bold;color:#6b1a00"></div>
+  <p style="font-size:12px;color:#5a3a1a;margin-top:16px">No ves HP, CA, ni daño del enemigo. Eso solo lo ve tu DM.</p>
+</div>
+
 <script>
 let caosActivo=false;
 function toggleCaos(){ caosActivo=!caosActivo; let b=document.getElementById('chaosBtn'); let l=document.getElementById('chaosLabel'); b.classList.toggle('on',caosActivo); b.textContent=caosActivo?'ON':'CAOS'; l.textContent=caosActivo?'CAOS: ON':'CAOS'; document.getElementById('frase').textContent=caosActivo?'🎰 Caos prendido: en 1 de cada 100 peleas pasa algo loco.':'Caos apagado. Pelea normal.'; }
@@ -170,25 +211,22 @@ document.getElementById('pdfInput').addEventListener('change',async e=>{ let f=e
 document.getElementById('pdfEnemigoInput').addEventListener('change',async e=>{ let f=e.target.files[0]; if(!f) return; document.getElementById('pdfEnemigoStatus').textContent="Leyendo PDF de enemigo..."; try{ let r=await leerPDF(f); let hp=r.getNum(/Puntos de Golpe M[aá]ximos\s*(\d+)/i)||r.getNum(/M[aá]ximos\s*(\d+)/i)||30; let ca=r.getNum(/\b(\d+)\s*CA\b/i)||r.getNum(/CA\s*(\d+)/i)||13; let fue=r.getNum(/FUERZA.*?(\d{1,2})/i)||14; let des=r.getNum(/DESTREZA.*?(\d{1,2})/i)||12; let bono=Math.floor((des-10)/2)+3; let dano="1d8+"+Math.max(0,Math.floor((fue-10)/2)); let dest=document.getElementById('pdfEnemigoDestino').value; if(dest==="nuevo"){ let nom=prompt("Nombre del nuevo enemigo:",f.name.replace(/\.pdf$/i,'').toUpperCase().slice(0,20)||"ENEMIGO")||"ENEMIGO"; let nu={name:nom.toUpperCase(),hp:hp,ca:ca,bono:bono,dano:dano,ataques:1,cant:1,objetivo:"derrotar",etiqueta:"📄 PDF"}; enemyPool.push(nu); currentEnemyPool=enemyPool.length-1; document.getElementById('pdfEnemigoStatus').textContent="¡Listo! Enemigo nuevo: "+nu.name+" HP "+hp+" CA "+ca+". No tocó los presets."; } else { let idx=+dest; enemyPool[idx].hp=hp; enemyPool[idx].ca=ca; enemyPool[idx].bono=bono; enemyPool[idx].dano=dano; currentEnemyPool=idx; document.getElementById('pdfEnemigoStatus').textContent="¡Listo! PDF cargado sobre "+enemyPool[idx].name; } renderPool(); cargarEnemigoPool(); }catch(err){ document.getElementById('pdfEnemigoStatus').textContent="No pude leer ese PDF de enemigo."; } });
 function preset(t){ if(t==='bandidos'){ document.getElementById('nombreEnemigo').value='Bandido'; document.getElementById('cantEnemigos').value=8; document.getElementById('enemigoHP').value=18; document.getElementById('enemigoCA').value=12; document.getElementById('enemigoBono').value=4; document.getElementById('enemigoDano').value='1d6+2'; document.getElementById('enemigoAtaques').value=1; document.getElementById('objetivo').value='derrotar'; currentEnemyPool=0; renderPool(); } if(t==='jabalies'){ document.getElementById('nombreEnemigo').value='Jabalí'; document.getElementById('cantEnemigos').value=3; document.getElementById('enemigoHP').value=35; document.getElementById('enemigoCA').value=13; document.getElementById('enemigoBono').value=5; document.getElementById('enemigoDano').value='2d6+2'; document.getElementById('enemigoAtaques').value=1; document.getElementById('objetivo').value='capturar'; currentEnemyPool=1; renderPool(); } window.scrollTo({top:0,behavior:'smooth'}); document.getElementById('frase').textContent=t==='bandidos'?'🏘️ Listo: La Vecindad - 8 Bandidos.':'🐗 Listo: La Cacería - 3 Jabalís para capturar.'; }
 document.getElementById('modo').addEventListener('change',e=>{ const tx={optimo:'Óptimo: ventaja siempre, veneno desde turno 1, le pegas al más débil.',normal:'Normal: usa tus números tal cual.',relajados:'Relajados: sin veneno, sin ventaja, sin prisa.',mosca:'¡Uh! Una Mosca: 1 de cada 4 turnos te distraes y pierdes tu turno, y pegas a un enemigo random.'}; document.getElementById('modoInfo').textContent=tx[e.target.value]; });
-function simular(){
- const modo=document.getElementById('modo').value; const ventBase=document.getElementById('ventaja')?document.getElementById('ventaja').value==="1":false; const cant=parseInt(document.getElementById('cantEnemigos').value)||3; const eHP=parseInt(document.getElementById('enemigoHP').value)||35; const eCA=parseInt(document.getElementById('enemigoCA').value)||13; const eBono=parseInt(document.getElementById('enemigoBono').value)||5; const eDano=document.getElementById('enemigoDano').value||"2d6+2"; const eAt=parseInt(document.getElementById('enemigoAtaques').value)||1; const obj=document.getElementById('objetivo').value; const sims=parseInt(document.getElementById('simulaciones').value)||10000; const nombre=document.getElementById('nombreEnemigo').value||"Enemigo";
+function simular(modoForzado, silencioso){
+ const modo = modoForzado || document.getElementById('modo').value; const ventBase=document.getElementById('ventaja')?document.getElementById('ventaja').value==="1":false; const cant=parseInt(document.getElementById('cantEnemigos').value)||3; const eHP=parseInt(document.getElementById('enemigoHP').value)||35; const eCA=parseInt(document.getElementById('enemigoCA').value)||13; const eBono=parseInt(document.getElementById('enemigoBono').value)||5; const eDano=document.getElementById('enemigoDano').value||"2d6+2"; const eAt=parseInt(document.getElementById('enemigoAtaques').value)||1; const obj=document.getElementById('objetivo').value; const sims=parseInt(document.getElementById('simulaciones').value)||10000; const nombre=document.getElementById('nombreEnemigo').value||"Enemigo";
  let vent=ventBase; if(modo==='optimo') vent=true; if(modo==='relajados'||modo==='mosca') vent=false;
- let act=players.filter(p=>p.activo); if(!act.length){ document.getElementById('frase').textContent="Palomea al menos 1 personaje en el Pool para pelear."; return; }
+ let act=players.filter(p=>p.activo); if(!act.length){ if(silencioso) return 0; document.getElementById('frase').textContent="Palomea al menos 1 personaje en el Pool para pelear."; return; }
  let wins=0, rondasL=[], vidaL=[], derL=[], capL=[], danoL=[], caosCount=0; let porPJ=act.map(p=>({name:p.name,hp0:p.hp,sumHP:0,sumDano:0,muertes:0}));
  let capPor={};
  for(let s=0;s<sims;s++){
    let party=act.map((p,idx)=>({idx:idx,name:p.name,hp:p.hp,ca:p.ca,bono:p.bono,dano:p.dano,ataques:p.ataques,dot:modo==='optimo'?Math.max(p.dot,2):(modo==='relajados'||modo==='mosca'?0:p.dot),vivo:true,danoRec:0}));
    let en=[]; for(let i=0;i<cant;i++) en.push({hp:eHP,vivo:true,capturado:false});
    let ronda=0,der=0,cap=0,danoTot=0;
-   // 🎰 RULETA CAOS
    let eventoCaos=null;
    if(caosActivo){ let d100=tirarDado(100); if(d100===100){ caosCount++; let tipo=tirarDado(4); if(tipo===1){ eventoCaos="☄️ Meteorito: todos pierden 20 HP"; party.forEach(p=>{p.hp-=20; if(p.hp<=0) p.vivo=false;}); en.forEach(e=>{e.hp-=20; if(e.hp<=0){e.vivo=false; der++;}}); } else if(tipo===2){ eventoCaos="⚡ Dios del cielo: un enemigo muere de la nada"; let vivos=en.filter(e=>e.vivo); if(vivos.length){ let t=vivos[Math.floor(Math.random()*vivos.length)]; t.vivo=false; der++; } } else if(tipo===3){ eventoCaos="💀 Alguien se muere de la nada"; let vivos=party.filter(p=>p.vivo); if(vivos.length){ let t=vivos[Math.floor(Math.random()*vivos.length)]; t.vivo=false; t.hp=0; } } else { eventoCaos="👼 Aparece un aliado: +1 ataque extra para todos"; party.forEach(p=>p.ataques+=1); } } }
    let escapado=false;
    while(party.some(p=>p.vivo)&&(der+cap<cant)&&ronda<50){
      ronda++;
-     // HUIR: cada ronda 40% de escapar antes de pelear
      if(obj==="huir" && Math.random()<0.4){ escapado=true; break; }
-     // SOBREVIVIR: si ya aguantaste 5 rondas vivo, ganas, no sigas peleando
      if(obj==="sobrevivir" && ronda>5){ break; }
      let distraido=(modo==='mosca'&&Math.random()<0.25);
      if(!distraido){
@@ -207,6 +245,7 @@ function simular(){
    rondasL.push(ronda); vidaL.push(vidaRest); derL.push(der); capL.push(cap); danoL.push(danoTot); if(obj==="capturar") capPor[cap]=(capPor[cap]||0)+1;
 }
  let winPct=(wins/sims*100).toFixed(1), losePct=((sims-wins)/sims*100).toFixed(1); let rondasMed=(rondasL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let vidaMed=(vidaL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let derMed=(derL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let capMed=(capL.reduce((a,b)=>a+b,0)/sims).toFixed(1); let danoMed=(danoL.reduce((a,b)=>a+b,0)/sims).toFixed(1);
+ if(silencioso) return parseFloat(winPct);
  document.getElementById('win').textContent=winPct+'%'; document.getElementById('lose').textContent=losePct+'%'; document.getElementById('rondas').textContent=rondasMed; document.getElementById('vidaRest').textContent=vidaMed; document.getElementById('derrotados').textContent=derMed; document.getElementById('capturados').textContent=capMed; document.getElementById('danoRecibido').textContent=danoMed;
  let nomModo={optimo:'Óptimo',normal:'Normal',relajados:'Relajados',mosca:'¡Uh! Una Mosca'}[modo];
  let pctCaos = (caosCount/sims*100).toFixed(2);
@@ -223,6 +262,107 @@ function simular(){
  let htmlCaos=''; if(caosActivo){ if(pctCaos < 1){ htmlCaos='<div style="margin-top:12px;background:#eaffea;padding:10px;border-radius:8px;border:1px solid #0a7a2a"><b>🎰 Ruleta Caos:</b> Tiraste en '+sims.toLocaleString()+' peleas. El Caos salió '+caosCount+' veces ('+pctCaos+'%). Para que pase el Caos tiene que llegar a 1%. No llegó, no pasa nada.</div>'; } else { htmlCaos='<div style="margin-top:12px;background:#eaffea;padding:10px;border-radius:8px;border:1px solid #0a7a2a"><b>🎰 Ruleta Caos:</b> Tiraste en '+sims.toLocaleString()+' peleas. El Caos salió '+caosCount+' veces ('+pctCaos+'%). Llegó al 1%. Sí pasa el Caos.</div>'; } }
  document.getElementById('resultado').innerHTML='<div><b>Resultado en modo '+nomModo+':</b> Tu Pool peleó contra <b>'+cant+' '+nombre+'(s)</b> '+sims.toLocaleString()+' veces.</div><div style="margin-top:8px">Ganas <b>'+winPct+'%</b>, pierdes <b>'+losePct+'%</b>. Dura <b>'+rondasMed+' rondas</b>, te quedas con <b>'+vidaMed+' HP</b>.</div>'+tabla+htmlCap+htmlCaos;
 }
+
+/* ===== VISTA JUGADOR / LINK DM <-> JUGADOR - Solo 4 modos ===== */
+const MODOS_JUGADOR = [
+  { valor: "optimo", etiqueta: "⚔️ Óptimo - Jugamos bien" },
+  { valor: "normal", etiqueta: "😐 Normal - Como siempre" },
+  { valor: "relajados", etiqueta: "😌 Relajado - Andamos valiendo madre" },
+  { valor: "mosca", etiqueta: "🪰 Mosca - Cada quien por su lado" }
+];
+let probsJugador = {};
+
+function encodeState(){
+  const estado = {
+    players: players,
+    enemigo: {
+      nombre: document.getElementById('nombreEnemigo').value,
+      cant: document.getElementById('cantEnemigos').value,
+      hp: document.getElementById('enemigoHP').value,
+      ca: document.getElementById('enemigoCA').value,
+      bono: document.getElementById('enemigoBono').value,
+      dano: document.getElementById('enemigoDano').value,
+      ataques: document.getElementById('enemigoAtaques').value,
+      objetivo: document.getElementById('objetivo').value
+    },
+    sims: document.getElementById('simulaciones').value,
+    caos: caosActivo
+  };
+  return btoa(encodeURIComponent(JSON.stringify(estado)));
+}
+function decodeState(str){
+  try{ return JSON.parse(decodeURIComponent(atob(str))); }catch(e){ return null; }
+}
+function copiarLinkJugador(){
+  const data = encodeState();
+  const link = window.location.origin + window.location.pathname + "?modo=jugador&data=" + data;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>{ document.getElementById('link-copiado').style.display='block'; });
+  } else {
+    prompt("Copia este link para jugadores:", link);
+    document.getElementById('link-copiado').style.display='block';
+  }
+}
+function actualizarProbJugador(){
+  const modoSel = document.getElementById('modoJugador').value;
+  const prob = probsJugador[modoSel] !== undefined ? probsJugador[modoSel] : 0;
+  document.getElementById('prob-jugador').innerHTML = prob + '%<small>de sobrevivir en modo ' + modoSel + '</small>';
+  let reco = "¿Peleas o Huyes?";
+  if(prob >= 70) reco = "🟢 DALE, SÍ SE PUEDE - Peleen";
+  else if(prob >= 40) reco = "🟡 ESTÁ RIESGOSO - Piensen bien";
+  else if(prob >= 20) reco = "🟠 ESTÁ CABRÓN - Mejor huyan";
+  else reco = "🔴 HUYAN - Nos van a hacer mierda";
+  document.getElementById('reco-jugador').textContent = reco;
+}
+function votar(accion){
+  const modoSel = document.getElementById('modoJugador').value;
+  const prob = probsJugador[modoSel] || 0;
+  document.getElementById('voto-msg').textContent = accion === 'pelear' ? "⚔️ Votaste PELEAR con " + prob + "% en modo " + modoSel + ". Suerte..." : "🏃 Votaste HUIR con " + prob + "% en modo " + modoSel + ". Buena decisión.";
+}
+function compartirWhatsApp(){
+  const modoSel = document.getElementById('modoJugador').value;
+  const prob = probsJugador[modoSel] || 0;
+  const texto = "Nos salió " + prob + "% de sobrevivir en modo " + modoSel + " ¿huimos o qué? Voten aquí: " + window.location.href;
+  window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank");
+}
+function initVista(){
+  const params = new URLSearchParams(window.location.search);
+  const esJugador = params.get("modo") === "jugador";
+  if(!esJugador) return;
+  const data = params.get("data");
+  const estado = data ? decodeState(data) : null;
+  if(estado){
+    if(estado.players) players = estado.players;
+    if(estado.enemigo){
+      document.getElementById('nombreEnemigo').value = estado.enemigo.nombre;
+      document.getElementById('cantEnemigos').value = estado.enemigo.cant;
+      document.getElementById('enemigoHP').value = estado.enemigo.hp;
+      document.getElementById('enemigoCA').value = estado.enemigo.ca;
+      document.getElementById('enemigoBono').value = estado.enemigo.bono;
+      document.getElementById('enemigoDano').value = estado.enemigo.dano;
+      document.getElementById('enemigoAtaques').value = estado.enemigo.ataques;
+      document.getElementById('objetivo').value = estado.enemigo.objetivo;
+    }
+    if(estado.sims) document.getElementById('simulaciones').value = estado.sims;
+    if(estado.caos !== undefined) caosActivo = estado.caos;
+    renderPool(); showPlayer(0);
+  }
+  document.getElementById('vista-dm').style.display = 'none';
+  const cj = document.getElementById('chaosWrap'); if(cj) cj.style.display = 'none';
+  const ko = document.querySelector('a[href*="ko-fi"]'); if(ko) ko.style.display = 'none';
+  document.getElementById('vista-jugador').style.display = 'block';
+  document.getElementById('lista-modos').textContent = 'Calculando los 4 modos...';
+  // Calcula los 4 modos en silencio, sin mostrar stats
+  setTimeout(()=>{
+    probsJugador = {};
+    MODOS_JUGADOR.forEach(m => { probsJugador[m.valor] = simular(m.valor, true); });
+    let html = "<b>Si juegan así, tienen:</b><br>";
+    MODOS_JUGADOR.forEach(m => { html += m.etiqueta + ": <b>" + probsJugador[m.valor] + "%</b><br>"; });
+    document.getElementById('lista-modos').innerHTML = html;
+    actualizarProbJugador();
+  }, 50);
+}
+initVista();
 </script>
 <div id="chaosWrap"><button id="chaosBtn" onclick="toggleCaos()">CAOS</button><br><div id="chaosLabel">CAOS</div></div>
 <a href="https://ko-fi.com/sasukeloco2313" target="_blank" rel="noopener" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: #6b1a00; color: #f5e6c8; padding: 12px 20px; border-radius: 50px; font-family: Georgia, serif; font-weight: bold; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; border:2px solid #c9a227;">🍺 Invítame una hidromiel</a>
