@@ -22,6 +22,10 @@
   .preset-btn:hover{background:#4a1a00}
   .party-tab{padding:10px;font-size:14px;letter-spacing:0;text-transform:none;background:#2b1a0e}
   .party-tab.active{background:#6b1a00;box-shadow:0 0 0 2px #c9a227}
+  .pool-item{display:flex;align-items:center;gap:8px;background:#fffdf2;border:2px solid #c9a227;border-radius:10px;padding:8px 10px;margin-top:8px}
+  .pool-item input[type="checkbox"]{width:22px;height:22px;accent-color:#6b1a00}
+  .pool-item b{flex:1;font-size:14px}
+  .pool-item button{width:auto;padding:6px 10px;margin:0;font-size:12px;letter-spacing:0}
   #frase{margin-top:14px;padding:14px;background:#2b1a0e;color:#f5e6c8;border:1px solid #c9a227;border-radius:10px;font-weight:bold;text-align:center;font-size:18px;line-height:1.4}
   #resultado{margin-top:15px;background:#fffdf2;border:1px solid #c9a227;border-radius:10px;padding:15px;font-size:14px;line-height:1.6}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
@@ -41,25 +45,42 @@
   <h1>⚔️ Tira y Muere ⚔️</h1>
   <div class="subtitle"><b>Tira y Muere</b> es un simulador de combate para D&D 5e que utiliza el método Monte Carlo para evaluar un encuentro antes de jugarlo. Configura combatientes, enemigos y condiciones, y el sistema simula el mismo combate 10,000 veces para estimar la probabilidad de victoria, derrota, duración y resultados por objetivo.</div>
 
-  <!-- IMPORTAR PDF - NUEVO, SOLO AÑADIDO -->
   <div class="seccion">
     <h3>📄 Importar PDF de Nivel20</h3>
-    <p style="font-size:13px;color:#5a3a1a;margin:4px 0">Sube tu hoja de Nivel20 (como la de Vavaf) y te rellena a Vavaf en la Party.</p>
+    <p style="font-size:13px;color:#5a3a1a;margin:4px 0">Sube tu hoja de Nivel20. Elige a dónde va: nuevo slot o sobre uno que ya existe. Si es Pedro, elige Nuevo Slot y no te toca a Vavaf.</p>
+    <label>¿A dónde va este PDF de personaje?</label>
+    <select id="pdfDestino">
+      <option value="nuevo">+ Nuevo Slot - Crear personaje nuevo (ej. Pedro)</option>
+      <option value="0">Sobre VAVAF - Actualizar</option>
+      <option value="1">Sobre KORGATH - Actualizar</option>
+      <option value="2">Sobre NYX - Actualizar</option>
+      <option value="3">Sobre ZERO - Actualizar</option>
+    </select>
     <input type="file" id="pdfInput" accept=".pdf" style="display:none">
     <button type="button" class="preset-btn" onclick="document.getElementById('pdfInput').click()">📄 Elegir PDF de personaje</button>
     <div id="pdfStatus" style="font-size:13px;color:#6b1a00;margin-top:8px"></div>
+    <hr style="border:1px solid #c9a227;margin:14px 0">
+    <p style="font-size:13px;color:#5a3a1a;margin:4px 0">¿Es un enemigo? Sube su PDF y se crea como enemigo nuevo, no como preset.</p>
+    <label>¿A dónde va este PDF de enemigo?</label>
+    <select id="pdfEnemigoDestino">
+      <option value="nuevo">+ Nuevo Slot - Crear enemigo nuevo</option>
+      <option value="0">Sobre Vecindad - Bandido</option>
+      <option value="1">Sobre Cacería - Jabalí</option>
+    </select>
+    <input type="file" id="pdfEnemigoInput" accept=".pdf" style="display:none">
+    <button type="button" class="preset-btn" onclick="document.getElementById('pdfEnemigoInput').click()">🐗 Elegir PDF de enemigo</button>
+    <div id="pdfEnemigoStatus" style="font-size:13px;color:#6b1a00;margin-top:8px"></div>
   </div>
 
-  <!-- PRESETS - IGUAL QUE ANTES -->
   <div class="seccion">
     <h3>🍺 Presets de la Taberna - Un click y ya está</h3>
     <div class="fila">
       <button type="button" class="preset-btn" onclick="preset('bandidos')">🏘️ La Vecindad<br><small>8 Bandidos - Derrotar</small></button>
       <button type="button" class="preset-btn" onclick="preset('jabalies')">🐗 La Cacería<br><small>3 Jabalís - Capturar</small></button>
     </div>
+    <div id="enemyPoolList" style="margin-top:10px"></div>
   </div>
 
-  <!-- MODO DE JUEGO - IGUAL QUE ANTES -->
   <div class="seccion">
     <h3>🎲 ¿Cómo vas a jugar esta pelea?</h3>
     <label>Modo de juego / Escenario</label>
@@ -72,23 +93,23 @@
     <div id="modoInfo" style="font-size:13px;color:#5a3a1a;margin-top:6px">Normal: usa tus números tal cual.</div>
   </div>
 
-  <!-- PARTY - NUEVO, REEMPLAZA "TU PERSONAJE" PERO CON MISMA ESTETICA -->
   <div class="seccion">
-    <h3>🛡️ Party - 4 Personajes</h3>
-    <div class="fila" style="grid-template-columns:1fr 1fr 1fr 1fr">
-      <button type="button" class="preset-btn party-tab active" onclick="showPlayer(0)">VAVAF</button>
-      <button type="button" class="preset-btn party-tab" onclick="showPlayer(1)">KORGATH</button>
-      <button type="button" class="preset-btn party-tab" onclick="showPlayer(2)">NYX</button>
-      <button type="button" class="preset-btn party-tab" onclick="showPlayer(3)">ZERO</button>
+    <h3>🛡️ Pool de Personajes - Elige quién pelea</h3>
+    <p style="font-size:13px;color:#5a3a1a;margin:4px 0">Palomea quién pelea hoy. Pueden pelear 1, 2, 3, 4 o todos los que tengas. Los demás quedan guardados en el pool, no se borran.</p>
+    <div id="poolList"></div>
+    <div class="fila">
+      <button type="button" class="preset-btn" onclick="agregarPersonajeManual()">+ Nuevo Slot Vacío</button>
+      <button type="button" class="preset-btn" onclick="activarTodos(true)">✅ Activar Todos</button>
     </div>
-    <div id="partyInfo" style="font-size:13px;color:#5a3a1a;margin-top:8px"></div>
+    <div id="partyInfo" style="font-size:13px;color:#5a3a1a;margin-top:10px"></div>
     <div id="playerFields"></div>
-    <div style="font-size:13px;color:#5a3a1a;margin-top:10px">La simulación usa a los 4 juntos. El total de HP de la Party es la suma de los 4.</div>
+    <div style="font-size:13px;color:#5a3a1a;margin-top:10px">La simulación usa solo a los palomeados. El total de HP es la suma de los activos.</div>
   </div>
 
-  <!-- ENEMIGO - IGUAL QUE ANTES -->
   <div class="seccion">
     <h3>🐗 El Enemigo</h3>
+    <label>Enemigo del Pool (preset o PDF)</label>
+    <select id="enemigoPoolSelect" onchange="cargarEnemigoPool()"></select>
     <div class="fila">
       <div><label>Nombre del enemigo</label><input type="text" id="nombreEnemigo" value="Jabalí"></div>
       <div><label>¿Cuántos enemigos son?</label><input type="number" id="cantEnemigos" value="3" min="1" max="10"></div>
@@ -149,79 +170,153 @@ function ataque(bono, danoStr, ventaja, CA){
   if(tirada===20 || tirada+bono>=CA) return tirarDano(danoStr, tirada===20);
   return 0;
 }
-const percentil=(arr,p)=>{const s=[...arr].sort((a,b)=>a-b); return s[Math.max(0,Math.floor(s.length*p/100)-1)];};
-
-// --- PARTY DE 4 - SOLO AÑADIDO, MISMO MODELO QUE TU HOJA DE VAVAF NIVEL 12 ---
 const partyPresets = [
-  {name:"VAVAF", apodo:"El Que Dudó", clase:"Monje 9, Pícaro 2, Mago 1", raza:"Mediano Piesligeros", hp:92, ca:12, bono:5, dano:"1d10", ataques:3, dot:0, fue:13, des:14, con:11, int:14, sab:10, car:13, historia:"Monje de Petra. Descubrió que los dioses están aprisionados."},
-  {name:"KORGATH", apodo:"El Rompe-Reinos", clase:"Bárbaro 8, Guerrero 4", raza:"Semiorco", hp:128, ca:15, bono:8, dano:"1d8+4", ataques:2, dot:0, fue:18, des:13, con:16, int:10, sab:12, car:8, historia:"Ex-guardia del templo falso. Quemó su uniforme."},
-  {name:"NYX", apodo:"La Hija del Fuego", clase:"Mago 9, Brujo 3", raza:"Elfa", hp:68, ca:13, bono:7, dano:"1d8+3", ataques:1, dot:3, fue:8, des:14, con:13, int:17, sab:12, car:14, historia:"Escucha la voz de Petra en sueños."},
-  {name:"ZERO", apodo:"El Fantasma", clase:"Pícaro 9, Monje 3", raza:"Mediano Piesligeros", hp:84, ca:15, bono:7, dano:"1d6+3", ataques:2, dot:2, fue:10, des:17, con:12, int:13, sab:14, car:11, historia:"Ladrón del templo. Vavaf lo dejó ir."}
+  {name:"VAVAF", apodo:"El Que Dudó", clase:"Monje 9, Pícaro 2, Mago 1", raza:"Mediano Piesligeros", hp:92, ca:12, bono:5, dano:"1d10", ataques:3, dot:0, fue:13, des:14, con:11, int:14, sab:10, car:13, historia:"Monje de Petra. Descubrió que los dioses están aprisionados.", activo:true},
+  {name:"KORGATH", apodo:"El Rompe-Reinos", clase:"Bárbaro 8, Guerrero 4", raza:"Semiorco", hp:128, ca:15, bono:8, dano:"1d8+4", ataques:2, dot:0, fue:18, des:13, con:16, int:10, sab:12, car:8, historia:"Ex-guardia del templo falso. Quemó su uniforme.", activo:true},
+  {name:"NYX", apodo:"La Hija del Fuego", clase:"Mago 9, Brujo 3", raza:"Elfa", hp:68, ca:13, bono:7, dano:"1d8+3", ataques:1, dot:3, fue:8, des:14, con:13, int:17, sab:12, car:14, historia:"Escucha la voz de Petra en sueños.", activo:true},
+  {name:"ZERO", apodo:"El Fantasma", clase:"Pícaro 9, Monje 3", raza:"Mediano Piesligeros", hp:84, ca:15, bono:7, dano:"1d6+3", ataques:2, dot:2, fue:10, des:17, con:12, int:13, sab:14, car:11, historia:"Ladrón del templo. Vavaf lo dejó ir.", activo:true}
 ];
 let players = JSON.parse(JSON.stringify(partyPresets));
 let currentPlayer = 0;
+let enemyPool = [
+  {name:"Bandido", hp:18, ca:12, bono:4, dano:"1d6+2", ataques:1, cant:8, objetivo:"derrotar", etiqueta:"🏘️ La Vecindad"},
+  {name:"Jabalí", hp:35, ca:13, bono:5, dano:"2d6+2", ataques:1, cant:3, objetivo:"capturar", etiqueta:"🐗 La Cacería"}
+];
+let currentEnemyPool = 1;
+function renderPool(){
+  let html = "";
+  players.forEach((p,i)=>{
+    html += '<div class="pool-item"><input type="checkbox" '+(p.activo?"checked":"")+' onchange="players['+i+'].activo=this.checked;renderPool();showPlayer('+currentPlayer+')"><b>'+p.name+' - HP '+p.hp+' | CA '+p.ca+' | '+p.clase+'</b><button type="button" onclick="showPlayer('+i+')">Editar</button><button type="button" onclick="eliminarPersonaje('+i+')">✕</button></div>';
+  });
+  document.getElementById('poolList').innerHTML = html;
+  let sel = document.getElementById('pdfDestino');
+  if(sel){
+    let val = sel.value;
+    sel.innerHTML = '<option value="nuevo">+ Nuevo Slot - Crear personaje nuevo (ej. Pedro)</option>' + players.map((p,i)=>'<option value="'+i+'">Sobre '+p.name+' - Actualizar</option>').join('');
+    sel.value = (val==="nuevo"||players[+val]) ? val : "nuevo";
+  }
+  let selE = document.getElementById('pdfEnemigoDestino');
+  if(selE){ selE.innerHTML = '<option value="nuevo">+ Nuevo Slot - Crear enemigo nuevo</option>' + enemyPool.map((e,i)=>'<option value="'+i+'">Sobre '+e.name+' - Actualizar</option>').join(''); }
+  let selPool = document.getElementById('enemigoPoolSelect');
+  if(selPool){
+    selPool.innerHTML = enemyPool.map((e,i)=>'<option value="'+i+'">'+(e.etiqueta||e.name)+' - '+e.name+' HP '+e.hp+' CA '+e.ca+'</option>').join('');
+    selPool.value = String(currentEnemyPool);
+  }
+  document.getElementById('enemyPoolList').innerHTML = "<div style='font-size:13px;color:#5a3a1a;margin-top:6px'><b>Pool de Enemigos:</b> " + enemyPool.map(e=>e.name).join(" • ") + "</div>";
+}
+function activarTodos(v){ players.forEach(p=>p.activo=v); renderPool(); showPlayer(currentPlayer); }
+function eliminarPersonaje(i){
+  if(players.length<=1){ alert("No puedes borrar al último."); return; }
+  if(!confirm("¿Borrar a "+players[i].name+" del pool?")) return;
+  players.splice(i,1); currentPlayer=0; renderPool(); showPlayer(0);
+}
+function agregarPersonajeManual(){
+  let nombre = prompt("Nombre del nuevo personaje (ej. PEDRO):","PEDRO");
+  if(!nombre) return;
+  players.push({name:nombre.toUpperCase(), apodo:"Nuevo", clase:"Guerrero 1", raza:"Humano", hp:12, ca:14, bono:3, dano:"1d8+2", ataques:1, dot:0, fue:14, des:12, con:13, int:10, sab:11, car:10, historia:"Nuevo personaje creado a mano.", activo:true});
+  currentPlayer = players.length-1; renderPool(); showPlayer(currentPlayer);
+}
 function showPlayer(i){
   currentPlayer = i;
-  document.querySelectorAll('.party-tab').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+  if(!players[i]) return;
   let p = players[i];
-  let totalHP = players.reduce((s,x)=>s+x.hp,0);
-  document.getElementById('partyInfo').innerHTML = `<b>${p.name} - ${p.apodo}</b> | ${p.clase} | ${p.raza}<br><i>${p.historia}</i><br><b>Party total: ${totalHP} HP</b> | FUE ${p.fue} DES ${p.des} CON ${p.con} INT ${p.int} SAB ${p.sab} CAR ${p.car}`;
-  document.getElementById('playerFields').innerHTML = `
-    <div class="fila">
-      <div><label>Vida (HP) - ${p.name}</label><input type="number" value="${p.hp}" min="1" onchange="players[${i}].hp=+this.value;showPlayer(${i})"></div>
-      <div><label>Armadura (CA) - ${p.name}</label><input type="number" value="${p.ca}" min="5" onchange="players[${i}].ca=+this.value"></div>
-    </div>
-    <div class="fila3">
-      <div><label>Bono para pegar</label><input type="number" value="${p.bono}" onchange="players[${i}].bono=+this.value"></div>
-      <div><label>Daño (ej: 1d10)</label><input type="text" value="${p.dano}" onchange="players[${i}].dano=this.value"></div>
-      <div><label>Ataques por turno</label><input type="number" value="${p.ataques}" min="1" max="8" onchange="players[${i}].ataques=+this.value"></div>
-    </div>
-    <div class="fila">
-      <div><label>Daño en el tiempo por turno (veneno / sangrado)</label><input type="number" value="${p.dot}" min="0" onchange="players[${i}].dot=+this.value"></div>
-      <div><label>¿Ventaja al pegar?</label>
-        <select id="ventaja"><option value="0">No, tiro normal</option><option value="1">Sí, ventaja</option></select>
-      </div>
-    </div>
-    <div class="fila3">
-      <div><label>FUE</label><input type="number" value="${p.fue}" onchange="players[${i}].fue=+this.value"></div>
-      <div><label>DES</label><input type="number" value="${p.des}" onchange="players[${i}].des=+this.value"></div>
-      <div><label>CON</label><input type="number" value="${p.con}" onchange="players[${i}].con=+this.value"></div>
-    </div>
-    <div class="fila3">
-      <div><label>INT</label><input type="number" value="${p.int}" onchange="players[${i}].int=+this.value"></div>
-      <div><label>SAB</label><input type="number" value="${p.sab}" onchange="players[${i}].sab=+this.value"></div>
-      <div><label>CAR</label><input type="number" value="${p.car}" onchange="players[${i}].car=+this.value"></div>
-    </div>`;
+  let activos = players.filter(x=>x.activo);
+  let totalHP = activos.reduce((s,x)=>s+x.hp,0);
+  document.getElementById('partyInfo').innerHTML = '<b>'+p.name+' - '+p.apodo+'</b> | '+p.clase+' | '+p.raza+' | '+(p.activo?"✅ Pelea":"⏸️ En pool, no pelea")+'<br><i>'+p.historia+'</i><br><b>Pelean '+activos.length+' de '+players.length+' | Total activos: '+totalHP+' HP</b> | FUE '+p.fue+' DES '+p.des+' CON '+p.con+' INT '+p.int+' SAB '+p.sab+' CAR '+p.car;
+  document.getElementById('playerFields').innerHTML =
+    '<div class="fila"><div><label>Vida (HP) - '+p.name+'</label><input type="number" value="'+p.hp+'" min="1" onchange="players['+i+'].hp=+this.value;renderPool();showPlayer('+i+')"></div><div><label>Armadura (CA) - '+p.name+'</label><input type="number" value="'+p.ca+'" min="5" onchange="players['+i+'].ca=+this.value;renderPool()"></div></div>' +
+    '<div class="fila3"><div><label>Bono para pegar</label><input type="number" value="'+p.bono+'" onchange="players['+i+'].bono=+this.value"></div><div><label>Daño (ej: 1d10)</label><input type="text" value="'+p.dano+'" onchange="players['+i+'].dano=this.value"></div><div><label>Ataques por turno</label><input type="number" value="'+p.ataques+'" min="1" max="8" onchange="players['+i+'].ataques=+this.value"></div></div>' +
+    '<div class="fila"><div><label>Daño en el tiempo por turno (veneno / sangrado)</label><input type="number" value="'+p.dot+'" min="0" onchange="players['+i+'].dot=+this.value"></div><div><label>¿Ventaja al pegar?</label><select id="ventaja"><option value="0">No, tiro normal</option><option value="1">Sí, ventaja</option></select></div></div>' +
+    '<div class="fila3"><div><label>FUE</label><input type="number" value="'+p.fue+'" onchange="players['+i+'].fue=+this.value"></div><div><label>DES</label><input type="number" value="'+p.des+'" onchange="players['+i+'].des=+this.value"></div><div><label>CON</label><input type="number" value="'+p.con+'" onchange="players['+i+'].con=+this.value"></div></div>' +
+    '<div class="fila3"><div><label>INT</label><input type="number" value="'+p.int+'" onchange="players['+i+'].int=+this.value"></div><div><label>SAB</label><input type="number" value="'+p.sab+'" onchange="players['+i+'].sab=+this.value"></div><div><label>CAR</label><input type="number" value="'+p.car+'" onchange="players['+i+'].car=+this.value"></div></div>' +
+    '<div><label>Nombre</label><input type="text" value="'+p.name+'" onchange="players['+i+'].name=this.value.toUpperCase();renderPool();showPlayer('+i+')"></div>';
 }
-showPlayer(0);
-
-// --- IMPORTAR PDF - SOLO AÑADIDO ---
+function cargarEnemigoPool(){
+  let idx = +document.getElementById('enemigoPoolSelect').value;
+  currentEnemyPool = idx;
+  let e = enemyPool[idx]; if(!e) return;
+  document.getElementById('nombreEnemigo').value = e.name;
+  document.getElementById('cantEnemigos').value = e.cant;
+  document.getElementById('enemigoHP').value = e.hp;
+  document.getElementById('enemigoCA').value = e.ca;
+  document.getElementById('enemigoBono').value = e.bono;
+  document.getElementById('enemigoDano').value = e.dano;
+  document.getElementById('enemigoAtaques').value = e.ataques;
+  document.getElementById('objetivo').value = e.objetivo;
+}
+renderPool(); showPlayer(0); cargarEnemigoPool();
+async function leerPDF(file){
+  let buf = await file.arrayBuffer();
+  let pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  let fullText = "";
+  for(let i=1;i<=pdf.numPages;i++){ let page = await pdf.getPage(i); let tc = await page.getTextContent(); fullText += tc.items.map(it=>it.str).join(" ") + "\n"; }
+  let getNum = (re)=>{ let m=fullText.match(re); return m?parseInt(m[1]):null; };
+  return {fullText, getNum};
+}
 document.getElementById('pdfInput').addEventListener('change', async (e)=>{
   let file = e.target.files[0]; if(!file) return;
   document.getElementById('pdfStatus').textContent = "Leyendo PDF...";
   try{
-    let buf = await file.arrayBuffer();
-    let pdf = await pdfjsLib.getDocument({data:buf}).promise;
-    let fullText = "";
-    for(let i=1;i<=pdf.numPages;i++){ let page = await pdf.getPage(i); let tc = await page.getTextContent(); fullText += tc.items.map(it=>it.str).join(" ") + "\n"; }
-    let getNum = (re)=>{ let m=fullText.match(re); return m?parseInt(m[1]):null; };
-    let hp = getNum(/Puntos de Golpe M[aá]ximos\s*(\d+)/i) || getNum(/M[aá]ximos\s*(\d+)/i);
-    let ca = getNum(/\b(\d+)\s*CA\b/i) || getNum(/CA\s*(\d+)/i);
-    let fue = getNum(/FUERZA.*?(\d{1,2})/i);
-    let des = getNum(/DESTREZA.*?(\d{1,2})/i);
-    let con = getNum(/CONSTITUCI[OÓ]N.*?(\d{1,2})/i);
-    let intv = getNum(/INTELIGENCIA.*?(\d{1,2})/i);
-    if(hp) players[0].hp = hp;
-    if(ca) players[0].ca = ca;
-    if(fue) players[0].fue = fue;
-    if(des) players[0].des = des;
-    if(con) players[0].con = con;
-    if(intv) players[0].int = intv;
-    document.getElementById('pdfStatus').textContent = `¡Listo! PDF leído: VAVAF - HP ${players[0].hp} CA ${players[0].ca} FUE ${players[0].fue} DES ${players[0].des}`;
-    showPlayer(0);
+    let r = await leerPDF(file);
+    let hp = r.getNum(/Puntos de Golpe M[aá]ximos\s*(\d+)/i) || r.getNum(/M[aá]ximos\s*(\d+)/i);
+    let ca = r.getNum(/\b(\d+)\s*CA\b/i) || r.getNum(/CA\s*(\d+)/i);
+    let fue = r.getNum(/FUERZA.*?(\d{1,2})/i);
+    let des = r.getNum(/DESTREZA.*?(\d{1,2})/i);
+    let con = r.getNum(/CONSTITUCI[OÓ]N.*?(\d{1,2})/i);
+    let intv = r.getNum(/INTELIGENCIA.*?(\d{1,2})/i);
+    let sab = r.getNum(/SABIDUR[ÍI]A.*?(\d{1,2})/i);
+    let car = r.getNum(/CARISMA.*?(\d{1,2})/i);
+    let destino = document.getElementById('pdfDestino').value;
+    if(destino==="nuevo"){
+      let nombre = prompt("Nombre del nuevo personaje (ej. PEDRO):", file.name.replace(/\.pdf$/i,'').toUpperCase().slice(0,20) || "PEDRO") || "PEDRO";
+      let nuevo = {name:nombre.toUpperCase(), apodo:"Nuevo del PDF", clase:"Guerrero 1", raza:"Humano", hp:hp||12, ca:ca||14, bono:3, dano:"1d8+2", ataques:1, dot:0, fue:fue||14, des:des||12, con:con||13, int:intv||10, sab:sab||11, car:car||10, historia:"Creado por PDF, nuevo slot. No reescribió a Vavaf.", activo:true};
+      players.push(nuevo);
+      currentPlayer = players.length-1;
+      document.getElementById('pdfStatus').textContent = "¡Listo! Nuevo slot creado: "+nuevo.name+" - HP "+nuevo.hp+" CA "+nuevo.ca+". Vavaf intacto.";
+    } else {
+      let idx = +destino;
+      if(hp) players[idx].hp = hp;
+      if(ca) players[idx].ca = ca;
+      if(fue) players[idx].fue = fue;
+      if(des) players[idx].des = des;
+      if(con) players[idx].con = con;
+      if(intv) players[idx].int = intv;
+      if(sab) players[idx].sab = sab;
+      if(car) players[idx].car = car;
+      currentPlayer = idx;
+      document.getElementById('pdfStatus').textContent = "¡Listo! PDF cargado sobre "+players[idx].name+" - HP "+players[idx].hp+" CA "+players[idx].ca;
+    }
+    renderPool(); showPlayer(currentPlayer);
   }catch(err){ document.getElementById('pdfStatus').textContent = "No pude leer ese PDF, intenta con otro."; }
 });
-
+document.getElementById('pdfEnemigoInput').addEventListener('change', async (e)=>{
+  let file = e.target.files[0]; if(!file) return;
+  document.getElementById('pdfEnemigoStatus').textContent = "Leyendo PDF de enemigo...";
+  try{
+    let r = await leerPDF(file);
+    let hp = r.getNum(/Puntos de Golpe M[aá]ximos\s*(\d+)/i) || r.getNum(/M[aá]ximos\s*(\d+)/i) || 30;
+    let ca = r.getNum(/\b(\d+)\s*CA\b/i) || r.getNum(/CA\s*(\d+)/i) || 13;
+    let fue = r.getNum(/FUERZA.*?(\d{1,2})/i) || 14;
+    let des = r.getNum(/DESTREZA.*?(\d{1,2})/i) || 12;
+    let bono = Math.floor((des-10)/2) + 3;
+    let danoBonus = Math.floor((fue-10)/2);
+    let dano = "1d8+"+Math.max(0,danoBonus);
+    let destino = document.getElementById('pdfEnemigoDestino').value;
+    if(destino==="nuevo"){
+      let nombre = prompt("Nombre del nuevo enemigo:", file.name.replace(/\.pdf$/i,'').toUpperCase().slice(0,20) || "ENEMIGO") || "ENEMIGO";
+      let nuevo = {name:nombre.toUpperCase(), hp:hp, ca:ca, bono:bono, dano:dano, ataques:1, cant:1, objetivo:"derrotar", etiqueta:"📄 PDF"};
+      enemyPool.push(nuevo);
+      currentEnemyPool = enemyPool.length-1;
+      document.getElementById('pdfEnemigoStatus').textContent = "¡Listo! Enemigo nuevo: "+nuevo.name+" HP "+hp+" CA "+ca+" Bono +"+bono+" Daño "+dano+". No tocó los presets.";
+    } else {
+      let idx = +destino;
+      enemyPool[idx].hp = hp; enemyPool[idx].ca = ca; enemyPool[idx].bono = bono; enemyPool[idx].dano = dano;
+      currentEnemyPool = idx;
+      document.getElementById('pdfEnemigoStatus').textContent = "¡Listo! PDF cargado sobre "+enemyPool[idx].name;
+    }
+    renderPool(); cargarEnemigoPool();
+  }catch(err){ document.getElementById('pdfEnemigoStatus').textContent = "No pude leer ese PDF de enemigo."; }
+});
 function preset(tipo){
   if(tipo==='bandidos'){
     document.getElementById('nombreEnemigo').value='Bandido';
@@ -232,6 +327,7 @@ function preset(tipo){
     document.getElementById('enemigoDano').value='1d6+2';
     document.getElementById('enemigoAtaques').value=1;
     document.getElementById('objetivo').value='derrotar';
+    currentEnemyPool=0; renderPool();
   }
   if(tipo==='jabalies'){
     document.getElementById('nombreEnemigo').value='Jabalí';
@@ -242,11 +338,11 @@ function preset(tipo){
     document.getElementById('enemigoDano').value='2d6+2';
     document.getElementById('enemigoAtaques').value=1;
     document.getElementById('objetivo').value='capturar';
+    currentEnemyPool=1; renderPool();
   }
   window.scrollTo({top:0, behavior:'smooth'});
   document.getElementById('frase').textContent = tipo==='bandidos' ? '🏘️ Listo: La Vecindad - 8 Bandidos. Ahora elige tu modo y tira.' : '🐗 Listo: La Cacería - 3 Jabalís para capturar. Ahora elige tu modo y tira.';
 }
-
 document.getElementById('modo').addEventListener('change', e=>{
   const textos={
     optimo:'Óptimo: ventaja siempre, veneno desde turno 1, le pegas al más débil.',
@@ -256,7 +352,6 @@ document.getElementById('modo').addEventListener('change', e=>{
   };
   document.getElementById('modoInfo').textContent = textos[e.target.value];
 });
-
 function dibujarGrafico(datos){
   const c=document.getElementById('grafico'), ctx=c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height); if(!datos.length) return;
@@ -266,7 +361,6 @@ function dibujarGrafico(datos){
   conteo.forEach((v,i)=>{const h=(v/maxC)*(c.height-40); ctx.fillStyle='#6b1a00'; ctx.fillRect(i*(c.width/bins)+2, c.height-20-h, (c.width/bins)-4, h); ctx.fillStyle='#2b1a0e'; ctx.font='bold 11px Georgia'; ctx.fillText(v, i*(c.width/bins)+5, c.height-24-h);});
   ctx.fillStyle='#2b1a0e'; ctx.font='12px Georgia'; ctx.fillText(min+' rondas',5,c.height-5); ctx.fillText(max+' rondas',c.width-80,c.height-5);
 }
-
 function simular(){
   const modo=document.getElementById('modo').value;
   const ventajaBase=document.getElementById('ventaja') ? document.getElementById('ventaja').value==="1" : false;
@@ -283,10 +377,12 @@ function simular(){
   if(modo==='optimo'){ ventajaEfectiva=true; }
   if(modo==='relajados'){ ventajaEfectiva=false; }
   if(modo==='mosca'){ ventajaEfectiva=false; }
+  let partyActiva = players.filter(p=>p.activo);
+  if(!partyActiva.length){ document.getElementById('frase').textContent="Palomea al menos 1 personaje en el Pool para pelear."; return; }
   let wins=0, rondasList=[], vidaRestList=[], derrotadosList=[], capturadosList=[], danoRecibidoList=[];
   let capturasPorCantidad={};
   for(let s=0;s<sims;s++){
-    let party = players.map(p=>({name:p.name, hp:p.hp, maxHp:p.hp, ca:p.ca, bono:p.bono, dano:p.dano, ataques:p.ataques, dot: modo==='optimo' ? Math.max(p.dot,2) : (modo==='relajados'||modo==='mosca' ? 0 : p.dot), vivo:true}));
+    let party = partyActiva.map(p=>({name:p.name, hp:p.hp, ca:p.ca, bono:p.bono, dano:p.dano, ataques:p.ataques, dot: modo==='optimo' ? Math.max(p.dot,2) : (modo==='relajados'||modo==='mosca' ? 0 : p.dot), vivo:true}));
     let enemigos=[]; for(let i=0;i<cant;i++) enemigos.push({hp:eHPmax, vivo:true, capturado:false});
     let ronda=0, derrotados=0, capturados=0, danoRecibido=0;
     while(party.some(p=>p.vivo) && (derrotados+capturados<cant) && ronda<50){
@@ -355,17 +451,17 @@ function simular(){
   document.getElementById('capturados').textContent=capturadosMed;
   document.getElementById('danoRecibido').textContent=danoMed;
   let nombreModo={optimo:'Óptimo', normal:'Normal', relajados:'Relajados', mosca:'¡Uh! Una Mosca'}[modo];
-  document.getElementById('frase').textContent=`Modo ${nombreModo} - Party vs ${cant} ${nombre}(s): ganas el ${winPct}% y te mueres el ${losePct}%.`;
+  document.getElementById('frase').textContent='Modo '+nombreModo+' - Pool ('+partyActiva.length+' peleando) vs '+cant+' '+nombre+'(s): ganas el '+winPct+'% y te mueres el '+losePct+'%.';
   let htmlCaptura='';
   if(objetivo==="capturar"){
     htmlCaptura='<div style="margin-top:12px;background:#fff8d6;padding:10px;border-radius:8px;border:1px solid #c9a227"><b>🎯 ¿Cuántos atrapas?</b><br>';
-    for(let i=cant;i>=0;i--){ let pct=((capturasPorCantidad[i]||0)/sims*100).toFixed(1); htmlCaptura+=`Atrapas ${i} de ${cant}: <b>${pct}%</b><br>`; }
+    for(let i=cant;i>=0;i--){ let pct=((capturasPorCantidad[i]||0)/sims*100).toFixed(1); htmlCaptura+='Atrapas '+i+' de '+cant+': <b>'+pct+'%</b><br>'; }
     htmlCaptura+='</div>';
   }
   document.getElementById('resultado').innerHTML=
-    `<div><b>Resultado en modo ${nombreModo}:</b> Tu Party peleó contra <b>${cant} ${nombre}(s)</b> ${sims.toLocaleString()} veces.</div>`+
-    `<div style="margin-top:8px">Ganas <b>${winPct}%</b>, pierdes <b>${losePct}%</b>. Dura <b>${rondasMed} rondas</b> en promedio, te quedas con <b>${vidaMed} HP</b> en total de la Party.</div>`+
-    `<div style="margin-top:8px">Derrotas <b>${derrotadosMed}</b>, capturas <b>${capturadosMed}</b>, te hacen <b>${danoMed}</b> de daño.</div>`+ htmlCaptura;
+    '<div><b>Resultado en modo '+nombreModo+':</b> Tu Pool peleó contra <b>'+cant+' '+nombre+'(s)</b> '+sims.toLocaleString()+' veces.</div>'+
+    '<div style="margin-top:8px">Ganas <b>'+winPct+'%</b>, pierdes <b>'+losePct+'%</b>. Dura <b>'+rondasMed+' rondas</b> en promedio, te quedas con <b>'+vidaMed+' HP</b> en total.</div>'+
+    '<div style="margin-top:8px">Derrotas <b>'+derrotadosMed+'</b>, capturas <b>'+capturadosMed+'</b>, te hacen <b>'+danoMed+'</b> de daño.</div>'+ htmlCaptura;
   dibujarGrafico(rondasList);
 }
 </script>
