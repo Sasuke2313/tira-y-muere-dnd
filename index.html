@@ -127,137 +127,111 @@ let partyPresets=[
 {name:"LUZ",nombre:"LUZ",clase:"Clérigo",hp:58,ac:18,dmg:"1d8+3",hit:4,desc:"Cura y pega."}
 ];
 let caosActivo=false;
-const LS_KEY='tiraYMuere_v1';
-const $=id=>document.getElementById(id);
-
-// --- GUARDADO / COMPARTIR 1.0 ---
-function guardarTodo(){ if(new URLSearchParams(location.search).get("modo")==="jugador") return; try{ localStorage.setItem(LS_KEY, JSON.stringify({players, enemyPool, caos:caosActivo})); }catch(e){} }
-function cargarTodo(){ try{ const g=localStorage.getItem(LS_KEY); if(!g) return; const d=JSON.parse(g); if(d.players?.length) players=d.players; if(d.enemyPool) enemyPool=d.enemyPool; if(d.caos!==undefined) caosActivo=d.caos; }catch(e){} }
-function exportar(){ const datos=JSON.stringify({players,enemyPool,caos:caosActivo}); if(navigator.clipboard?.writeText) navigator.clipboard.writeText(datos).then(()=>alert('Copiado. Pégalo donde quieras para compartir tu party.')); else prompt('Copia este código:',datos); }
-function importar(){ const t=prompt('Pega aquí el código que te compartieron:'); if(!t) return; try{ const d=JSON.parse(t); if(d.players) players=d.players; if(d.enemyPool) enemyPool=d.enemyPool; if(d.caos!==undefined) caosActivo=d.caos; renderPool(); guardarTodo(); alert('Party importado.'); }catch(e){ alert('Ese código no sirve.'); } }
-function resetear(){ if(!confirm('¿Borrar todo y volver a VAVAF y compañía?')) return; try{ localStorage.removeItem(LS_KEY); }catch(e){} location.reload(); }
+function guardarTodo(){ if(new URLSearchParams(window.location.search).get("modo")==="jugador") return; try{ localStorage.setItem('tiraYMuere_v1', JSON.stringify({players:players, enemyPool:enemyPool, caos:caosActivo})); }catch(e){} }
+function cargarTodo(){ try{ let g=localStorage.getItem('tiraYMuere_v1'); if(!g) return; let d=JSON.parse(g); if(d.players && d.players.length) players=d.players; if(d.enemyPool) enemyPool=d.enemyPool; if(d.caos!==undefined) caosActivo=d.caos; }catch(e){} }
+function exportar(){ let datos=JSON.stringify({players:players,enemyPool:enemyPool,caos:caosActivo}); navigator.clipboard.writeText(datos).then(()=>alert('Copiado. Pégalo donde quieras para compartir tu party.')); }
+function importar(){ let t=prompt('Pega aquí el código que te compartieron:'); if(!t) return; try{ let d=JSON.parse(t); if(d.players) players=d.players; if(d.enemyPool) enemyPool=d.enemyPool; if(d.caos!==undefined) caosActivo=d.caos; renderPool(); guardarTodo(); alert('Party importado.'); }catch(e){ alert('Ese código no sirve.'); } }
+function resetear(){ if(!confirm('¿Borrar todo y volver a VAVAF y compañía?')) return; localStorage.removeItem('tiraYMuere_v1'); location.reload(); }
 
 let players=JSON.parse(JSON.stringify(partyPresets));
 let currentPlayer=0;
 let enemyPool=[{name:"Goblin",hp:7,ac:15,dmg:"1d6+2",hit:4,count:3}];
+let currentEnemyPool=1;
 cargarTodo();
 
-// --- DADOS OPTIMIZADO: parsea una vez, tira muchas veces ---
-const dmgCache=new Map();
-function parseDmg(s){ s=(s||"1d6").toLowerCase().replace(/\s/g,''); if(dmgCache.has(s)) return dmgCache.get(s); let m=s.match(/(\d+)d(\d+)([+-]\d+)?/); let r=!m?{n:1,d:6,b:0}:{n:+m[1],d:+m[2],b:m[3]?+m[3]:0}; dmgCache.set(s,r); return r; }
-function rollParsed(p){ let t=p.b; for(let i=0;i<p.n;i++) t+=(Math.random()*p.d|0)+1; return t; }
-function rollDmg(s){ return rollParsed(parseDmg(s)); }
+function parseDmg(s){ s=(s||"1d6").toLowerCase().replace(/\s/g,''); let m=s.match(/(\d+)d(\d+)([+-]\d+)?/); if(!m) return {n:1,d:6,b:0}; return {n:parseInt(m[1]),d:parseInt(m[2]),b:m[3]?parseInt(m[3]):0}; }
+function rollDmg(s){ let p=parseDmg(s); let t=p.b; for(let i=0;i<p.n;i++) t+=Math.floor(Math.random()*p.d)+1; return t; }
 
 function renderPool(){
- $('playerPool').innerHTML=players.map((p,i)=>`<span class="chip ${i===currentPlayer?'active':''}" onclick="switchPlayer(${i})">${p.nombre||p.name} ${p.cambioEnEstaPelea?"⭐":""}</span>`).join('');
- let total=0, stats=[];
- for(const p of players){ total+=p.hp; stats.push(`${p.nombre||p.name}: ${p.hp} HP, CA ${p.ac}`); }
- $('partyStats').textContent=stats.join(' | ');
- $('partyHP').textContent=total+" HP • "+players.length+" héroes";
- const cur=players[currentPlayer];
- $('charImg').src=cur?.img || 'data:image/gif;base64,[STRIPPED]';
- $('enemyPoolList').innerHTML="<div style='font-size:13px;color:#5a3a1a;margin-top:6px'><b>Pool de Enemigos:</b> "+enemyPool.map(e=>e.name).join(" • ")+"</div>";
+ let el=document.getElementById('playerPool'); el.innerHTML=players.map((p,i)=>`<span class="chip ${i===currentPlayer?'active':''}" onclick="switchPlayer(${i})">${p.nombre||p.name} ${p.cambioEnEstaPelea?"⭐":""}</span>`).join('');
+ let total=players.reduce((s,p)=>s+p.hp,0);
+ document.getElementById('partyStats').textContent=players.map(p=>`${p.nombre||p.name}: ${p.hp} HP, CA ${p.ac}`).join(' | ');
+ document.getElementById('partyHP').textContent=total+" HP • "+players.length+" héroes";
+ if(players[currentPlayer].img) document.getElementById('charImg').src=players[currentPlayer].img; else document.getElementById('charImg').src='data:image/gif;base64,[STRIPPED]';
+ document.getElementById('enemyPoolList').innerHTML="<div style='font-size:13px;color:#5a3a1a;margin-top:6px'><b>Pool de Enemigos:</b> "+enemyPool.map(e=>e.name).join(" • ")+"</div>";
  renderChar(); renderEnemies();
  guardarTodo();
 }
 function renderChar(){
- const p=players[currentPlayer]; if(!p) return;
- $('charName').textContent=p.nombre||p.name;
- $('charClass').textContent=p.clase||"Héroe";
- $('charDesc').textContent=p.desc||"";
- $('statHP').textContent=p.hp+" HP";
- $('statAC').textContent=p.ac;
- $('statDmg').textContent=p.dmg;
- $('statHit').textContent=Math.max(5,Math.min(95,(21-(15-(p.hit||5)))*5))+"%";
- $('pName').value=p.nombre||p.name;
- $('pClass').value=p.clase||"";
- $('pHP').value=p.hp;
- $('pAC').value=p.ac;
- $('pDmg').value=p.dmg;
- $('pHit').value=p.hit||5;
+ let p=players[currentPlayer]; if(!p) return;
+ document.getElementById('charName').textContent=p.nombre||p.name;
+ document.getElementById('charClass').textContent=p.clase||"Héroe";
+ document.getElementById('charDesc').textContent=p.desc||"";
+ document.getElementById('statHP').textContent=p.hp+" HP";
+ document.getElementById('statAC').textContent=p.ac;
+ document.getElementById('statDmg').textContent=p.dmg;
+ let hitProb=Math.max(5,Math.min(95,(21-(15-(p.hit||5)))*5));
+ document.getElementById('statHit').textContent=hitProb+"%";
+ document.getElementById('pName').value=p.nombre||p.name;
+ document.getElementById('pClass').value=p.clase||"";
+ document.getElementById('pHP').value=p.hp;
+ document.getElementById('pAC').value=p.ac;
+ document.getElementById('pDmg').value=p.dmg;
+ document.getElementById('pHit').value=p.hit||5;
 }
 function renderEnemies(){
- $('enemyList').innerHTML=enemyPool.map((e,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;background:#fff3c4;border-radius:8px;margin-bottom:4px"><span><b>${e.name}</b> x${e.count} • ${e.hp} HP • CA ${e.ac} • ${e.dmg}</span><button class="smallBtn" onclick="enemyPool.splice(${i},1);renderPool()">✕</button></div>`).join('');
+ let el=document.getElementById('enemyList'); el.innerHTML=enemyPool.map((e,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;background:#fff3c4;border-radius:8px;margin-bottom:4px"><span><b>${e.name}</b> x${e.count} • ${e.hp} HP • CA ${e.ac} • ${e.dmg}</span><button class="smallBtn" onclick="enemyPool.splice(${i},1);renderPool()">✕</button></div>`).join('');
 }
 function switchPlayer(i){ currentPlayer=i; renderPool(); }
 function savePlayer(){
- players[currentPlayer]={nombre:$('pName').value||"Héroe",name:$('pName').value||"Héroe",clase:$('pClass').value, hp:parseInt($('pHP').value)||30, ac:parseInt($('pAC').value)||12, dmg:$('pDmg').value||"1d6", hit:parseInt($('pHit').value)||5, desc:"Personaje personalizado."};
- renderPool();
+ let p={nombre:document.getElementById('pName').value||"Héroe",name:document.getElementById('pName').value||"Héroe",clase:document.getElementById('pClass').value, hp:parseInt(document.getElementById('pHP').value)||30, ac:parseInt(document.getElementById('pAC').value)||12, dmg:document.getElementById('pDmg').value||"1d6", hit:parseInt(document.getElementById('pHit').value)||5, desc:"Personaje personalizado."};
+ players[currentPlayer]=p; renderPool();
 }
 function addEnemy(){
- enemyPool.push({name:$('enemyName').value||"Enemigo",hp:parseInt($('enemyHP').value)||10,ac:parseInt($('enemyAC').value)||12,dmg:$('enemyDmg').value||"1d6",hit:parseInt($('enemyHit').value)||4,count:parseInt($('enemyCount').value)||1});
- renderPool();
+ let e={name:document.getElementById('enemyName').value||"Enemigo",hp:parseInt(document.getElementById('enemyHP').value)||10,ac:parseInt(document.getElementById('enemyAC').value)||12,dmg:document.getElementById('enemyDmg').value||"1d6",hit:parseInt(document.getElementById('enemyHit').value)||4,count:parseInt(document.getElementById('enemyCount').value)||1};
+ enemyPool.push(e); renderPool();
 }
-const PRESETS={goblin:{name:"Goblin",hp:7,ac:15,dmg:"1d6+2",hit:4,count:3},orco:{name:"Orco",hp:15,ac:13,dmg:"1d12+3",hit:5,count:2},dragon:{name:"Dragón Joven",hp:110,ac:18,dmg:"2d10+4",hit:7,count:1},esqueleto:{name:"Esqueleto",hp:13,ac:13,dmg:"1d6+2",hit:4,count:4}};
-function loadPreset(k){ const p=PRESETS[k]; if(!p) return; $('enemyName').value=p.name; $('enemyHP').value=p.hp; $('enemyAC').value=p.ac; $('enemyDmg').value=p.dmg; $('enemyHit').value=p.hit; $('enemyCount').value=p.count; }
-function toggleCaos(){ caosActivo=!caosActivo; const b=$('chaosBtn'); b.classList.toggle('on',caosActivo); b.textContent=caosActivo?'ON':'CAOS'; $('chaosLabel').textContent=caosActivo?'CAOS: ON':'CAOS'; $('frase').textContent=caosActivo?'🎰 Caos prendido: en 1 de cada 100 peleas pasa algo loco.':'Caos apagado. Pelea normal.'; guardarTodo(); }
+function loadPreset(k){
+ let presets={goblin:{name:"Goblin",hp:7,ac:15,dmg:"1d6+2",hit:4,count:3},orco:{name:"Orco",hp:15,ac:13,dmg:"1d12+3",hit:5,count:2},dragon:{name:"Dragón Joven",hp:110,ac:18,dmg:"2d10+4",hit:7,count:1},esqueleto:{name:"Esqueleto",hp:13,ac:13,dmg:"1d6+2",hit:4,count:4}};
+ let p=presets[k]; document.getElementById('enemyName').value=p.name; document.getElementById('enemyHP').value=p.hp; document.getElementById('enemyAC').value=p.ac; document.getElementById('enemyDmg').value=p.dmg; document.getElementById('enemyHit').value=p.hit; document.getElementById('enemyCount').value=p.count;
+}
+function toggleCaos(){ caosActivo=!caosActivo; let b=document.getElementById('chaosBtn'); let l=document.getElementById('chaosLabel'); b.classList.toggle('on',caosActivo); b.textContent=caosActivo?'ON':'CAOS'; l.textContent=caosActivo?'CAOS: ON':'CAOS'; document.getElementById('frase').textContent=caosActivo?'🎰 Caos prendido: en 1 de cada 100 peleas pasa algo loco.':'Caos apagado. Pelea normal.'; guardarTodo(); }
 
 function simular(){
- let wins=0, totalRondas=0, caosEventos=0;
- const ejemplos=[];
- // Pre-parsear una vez, no 1000 veces
- const partyBase=players.map(p=>({...p, _dmg:parseDmg(p.dmg)}));
- const enemyBase=[];
- for(const e of enemyPool) for(let i=0;i<e.count;i++) enemyBase.push({...e, _dmg:parseDmg(e.dmg)});
+ let wins=0, deaths=0, totalRondas=0, totalDmgRecibido=0, ejemplos=[];
+ let caosEventos=0;
  for(let s=0;s<1000;s++){
-   const party=partyBase.map(p=>({...p, hp:p.hp}));
-   const enemigos=enemyBase.map(e=>({...e, hp:e.hp}));
-   let ronda=0;
-   const caosEste=caosActivo && Math.random()<0.01;
-   if(caosEste) caosEventos++;
+   let party=JSON.parse(JSON.stringify(players));
+   let enemigos=[]; enemyPool.forEach(e=>{ for(let i=0;i<e.count;i++) enemigos.push({...e,hp:e.hp}); });
+   let ronda=0, caosEste=false;
+   if(caosActivo && Math.random()<0.01){ caosEste=true; caosEventos++; }
    while(ronda<50){
      ronda++;
-     let vivosParty=0, vivosEnem=0;
-     for(const p of party) if(p.hp>0) vivosParty++;
-     for(const e of enemigos) if(e.hp>0) vivosEnem++;
-     if(!vivosParty || !vivosEnem) break;
-     // Party ataca
-     for(const p of party){
-       if(p.hp<=0) continue;
-       const target=enemigos.find(e=>e.hp>0); if(!target) break;
-       const tirada=(Math.random()*20|0)+1;
-       if(tirada===20 || tirada+(p.hit||5)>=target.ac){ let dmg=rollParsed(p._dmg); if(tirada===20) dmg*=2; target.hp-=dmg; }
-     }
-     // Enemigos atacan
-     for(const e of enemigos){
-       if(e.hp<=0) continue;
-       const vivos=party.filter(p=>p.hp>0); if(!vivos.length) break;
-       const target=vivos[(Math.random()*vivos.length)|0];
-       const tirada=(Math.random()*20|0)+1;
-       if(tirada===20 || tirada+(e.hit||4)>=target.ac){ let dmg=rollParsed(e._dmg); if(tirada===20) dmg*=2; if(caosEste) dmg*=2; target.hp-=dmg; }
-     }
+     let vivosParty=party.filter(p=>p.hp>0); let vivosEnem=enemigos.filter(e=>e.hp>0);
+     if(!vivosParty.length || !vivosEnem.length) break;
+     for(let p of vivosParty){ if(!enemigos.filter(e=>e.hp>0).length) break; let target=enemigos.find(e=>e.hp>0); let tirada=Math.floor(Math.random()*20)+1; if(tirada===20 || tirada+(p.hit||5)>=target.ac){ let dmg=rollDmg(p.dmg); if(tirada===20) dmg*=2; target.hp-=dmg; } }
+     for(let e of enemigos.filter(x=>x.hp>0)){ let vivos=party.filter(p=>p.hp>0); if(!vivos.length) break; let target=vivos[Math.floor(Math.random()*vivos.length)]; let tirada=Math.floor(Math.random()*20)+1; if(tirada===20 || tirada+(e.hit||4)>=target.ac){ let dmg=rollDmg(e.dmg); if(tirada===20) dmg*=2; if(caosEste) dmg*=2; target.hp-=dmg; totalDmgRecibido+=dmg; } }
    }
-   const vivosFinal=party.reduce((a,p)=>a+(p.hp>0?1:0),0);
-   if(vivosFinal>0) wins++;
+   let vivosFinal=party.filter(p=>p.hp>0).length;
+   if(vivosFinal>0) wins++; else deaths++;
    totalRondas+=ronda;
    if(s<3) ejemplos.push(`Pelea ${s+1}: ${vivosFinal>0?'✅ Sobreviven '+vivosFinal:'💀 Todos mueren'} en ${ronda} rondas`);
  }
- const deaths=1000-wins;
- const winRate=Math.round(wins/10);
- const consejo= winRate>=80?"🟢 Dale sin miedo, lo tienes fácil.": winRate>=50?"🟡 Se puede, pero lleva pociones.": winRate>=20?"🔴 Está cabrón, piénsalo dos veces.":"💀 No entres, te van a matar.";
- $('resultado').innerHTML=`<b style="font-size:20px">${winRate}% de ganar</b> • ${wins} victorias / ${deaths} derrotas\n${consejo}\nPromedio: ${(totalRondas/1000).toFixed(1)} rondas por pelea\n${ejemplos.join('\n')}${caosEventos?'\n🎰 Caos activó '+caosEventos+' veces (daño x2)':''}`;
+ let winRate=Math.round(wins/10);
+ let consejo= winRate>=80?"🟢 Dale sin miedo, lo tienes fácil.": winRate>=50?"🟡 Se puede, pero lleva pociones.": winRate>=20?"🔴 Está cabrón, piénsalo dos veces.":"💀 No entres, te van a matar.";
+ document.getElementById('resultado').innerHTML=`<b style="font-size:20px">${winRate}% de ganar</b> • ${wins} victorias / ${deaths} derrotas\n${consejo}\nPromedio: ${(totalRondas/1000).toFixed(1)} rondas por pelea\n${ejemplos.join('\n')}${caosEventos?'\n🎰 Caos activó '+caosEventos+' veces (daño x2)':''}`;
 }
 
 function loadFile(event){
- const f=event.target.files[0]; if(!f) return;
- const r=new FileReader(); r.onload=function(e){
-   const txt=e.target.result; const nombre=f.name.replace(/\.[^.]+$/,'');
-   const hpM=txt.match(/(?:HP|Hit Points|Puntos).{0,20}?(\d{2,3})/i); const acM=txt.match(/Armor Class|AC.{0,10}?(\d{1,2})/i);
-   players[currentPlayer]={nombre:nombre,name:nombre,clase:"Importado",hp:hpM?parseInt(hpM[1]):50,ac:acM?parseInt(acM[1]):14,dmg:"1d8+3",hit:5,desc:"Importado de "+f.name};
-   renderPool(); alert('Cargado: '+nombre);
+ let f=event.target.files[0]; if(!f) return;
+ let r=new FileReader(); r.onload=function(e){
+   let txt=e.target.result; let nombre=f.name.replace(/\.[^.]+$/,'');
+   let hpM=txt.match(/(?:HP|Hit Points|Puntos).{0,20}?(\d{2,3})/i); let acM=txt.match(/Armor Class|AC.{0,10}?(\d{1,2})/i);
+   let p={nombre:nombre,name:nombre,clase:"Importado",hp:hpM?parseInt(hpM[1]):50,ac:acM?parseInt(acM[1]):14,dmg:"1d8+3",hit:5,desc:"Importado de "+f.name};
+   players[currentPlayer]=p; renderPool(); alert('Cargado: '+nombre);
  }; r.readAsText(f);
 }
 function compartirJugador(){
- const estado={players, enemyPool, caos:caosActivo};
- const url=location.origin+location.pathname+"?modo=jugador&d="+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(estado)))));
- if(navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(()=>alert('Link copiado. Compártelo con tus jugadores.')); else prompt('Copia el link:',url);
+ let estado={players:players, enemyPool:enemyPool, caos:caosActivo};
+ let url=window.location.origin+window.location.pathname+"?modo=jugador&d="+encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(estado)))));
+ navigator.clipboard.writeText(url).then(()=>alert('Link copiado. Compártelo con tus jugadores.'));
 }
 function initVista(){
- const params=new URLSearchParams(location.search);
+ let params=new URLSearchParams(window.location.search);
  if(params.get("modo")==="jugador" && params.get("d")){
-   try{ const estado=JSON.parse(decodeURIComponent(escape(atob(params.get("d"))))); players=estado.players; enemyPool=estado.enemyPool; caosActivo=estado.caos||false; document.querySelectorAll('.card')[2].style.display='none'; }catch(e){}
+   try{ let estado=JSON.parse(decodeURIComponent(escape(atob(params.get("d"))))); players=estado.players; enemyPool=estado.enemyPool; caosActivo=estado.caos||false; document.querySelectorAll('.card')[2].style.display='none'; }catch(e){}
  }
- if(caosActivo){ const b=$('chaosBtn'); if(b){ b.classList.add('on'); b.textContent='ON'; $('chaosLabel').textContent='CAOS: ON'; } }
+ if(caosActivo){ let b=document.getElementById('chaosBtn'); if(b){ b.classList.add('on'); b.textContent='ON'; document.getElementById('chaosLabel').textContent='CAOS: ON'; } }
 }
 
 initVista();
