@@ -3,175 +3,372 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tira y Muere - Party de Petra</title>
+<title>Tira y Muere - Simulador de Combate D&D 5e</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-body{background:#1a0f0a;color:#f5e6c8;font-family:Georgia,serif;padding:15px;max-width:900px;margin:auto}
-h1{text-align:center;color:#ffcc00;margin:5px}
-.sub{text-align:center;color:#ccc;font-size:14px}
-.card{background:#2d1a0f;border:2px solid #8b5a2b;border-radius:12px;padding:15px;margin:10px 0}
-.tabs{display:flex;gap:5px;flex-wrap:wrap}
-.tab{flex:1;padding:10px;background:#4a2c15;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
-.tab.active{background:#ffcc00;color:#000}
-label{display:block;margin:6px 0 2px;font-size:13px;color:#ffcc99}
-input,select{width:100%;padding:8px;border-radius:6px;border:1px solid #555;background:#fff;color:#000;box-sizing:border-box}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.stat-box{background:#3a2415;padding:8px;border-radius:8px;text-align:center;font-size:13px}
-button.big{width:100%;padding:14px;background:#c0392b;color:#fff;font-size:18px;border:none;border-radius:10px;margin-top:12px;cursor:pointer}
-button.gold{width:100%;padding:12px;background:#ffcc00;color:#000;font-weight:bold;border:none;border-radius:10px;margin-top:8px;cursor:pointer}
-#log{background:#000;color:#aaffaa;padding:12px;border-radius:8px;white-space:pre-wrap;min-height:220px;margin-top:12px;font-family:monospace;font-size:13px}
+  body{font-family:Georgia,serif;margin:0;padding:20px;color:#2b1a0e;background-color:#1a0f08;background-image:radial-gradient(circle at 15% 10%, rgba(255,170,40,.35) 0, rgba(255,170,40,0) 35%),radial-gradient(circle at 85% 10%, rgba(255,170,40,.35) 0, rgba(255,170,40,0) 35%),repeating-linear-gradient(90deg, #3a2413 0 42px, #2e1a0e 42px 44px, #432c1a 44px 86px)}
+  .card{max-width:850px;margin:50px auto 20px;background:#f5e6c8;padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.6), inset 0 0 0 3px #c9a227, inset 0 0 0 6px #f5e6c8, inset 0 0 0 8px #8b5a1a}
+  h1{text-align:center;color:#4a1a00;margin:5px 0 2px;font-size:34px;letter-spacing:1px;text-transform:uppercase;text-shadow:1px 1px 0 #c9a227}
+  .subtitle{text-align:center;color:#5a3a1a;margin-top:10px;font-size:15px;line-height:1.5;font-style:italic}
+  .seccion{margin-top:22px;padding:14px;background:rgba(255,255,255,.55);border:1px solid #c9a227;border-radius:10px}
+  .seccion h3{margin:0 0 8px;color:#6b1a00;border-bottom:2px solid #c9a227;padding-bottom:6px}
+  label{font-weight:bold;display:block;margin-top:12px;color:#3a2413;font-size:14px}
+  select,input[type="number"],input[type="text"]{width:100%;padding:10px;margin-top:5px;border:2px solid #8b5a1a;border-radius:8px;font-size:15px;box-sizing:border-box;background:#fffdf2;font-family:Georgia,serif}
+  .fila{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fila3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  button{width:100%;padding:14px;margin-top:22px;background:#6b1a00;color:#f5e6c8;border:2px solid #c9a227;border-radius:10px;font-size:19px;font-weight:bold;cursor:pointer;letter-spacing:2px;text-transform:uppercase}
+  button:hover{background:#8b0000}
+  .preset-btn{padding:12px;font-size:15px;letter-spacing:0;text-transform:none;background:#2b1a0e}
+  .preset-btn:hover{background:#4a1a00}
+  .party-tab{padding:10px;font-size:14px;letter-spacing:0;text-transform:none;background:#2b1a0e}
+  .party-tab.active{background:#6b1a00;box-shadow:0 0 0 2px #c9a227}
+  #frase{margin-top:14px;padding:14px;background:#2b1a0e;color:#f5e6c8;border:1px solid #c9a227;border-radius:10px;font-weight:bold;text-align:center;font-size:18px;line-height:1.4}
+  #resultado{margin-top:15px;background:#fffdf2;border:1px solid #c9a227;border-radius:10px;padding:15px;font-size:14px;line-height:1.6}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+  .stat{background:#2b1a0e;color:#f5e6c8;border:1px solid #c9a227;border-radius:10px;padding:12px;text-align:center}
+  .stat span{display:block;color:#d4b45a;font-size:12px}
+  .stat b{display:block;font-size:28px;margin-top:4px;color:#fff}
+  .stats2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+  .stat2{background:#fffdf2;border:1px solid #c9a227;border-radius:10px;padding:12px;text-align:center}
+  .stat2 span{display:block;color:#5a3a1a;font-size:12px}
+  .stat2 b{display:block;font-size:22px;margin-top:4px;color:#6b1a00}
+  canvas{width:100%;max-height:300px;margin-top:10px;border:1px solid #c9a227;border-radius:8px;background:#fffdf2}
+  @media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.stats2{grid-template-columns:1fr}.fila,.fila3{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<h1>🍺 TIRA Y MUERE 🍺</h1>
-<p class="sub">Party  - Vs 8 Bandidos + 3 Jabalís</p>
-
 <div class="card">
-<h3>📄 Importar PDF de Nivel20</h3>
-<p style="font-size:13px">Sube tu hoja (como la de Vavaf) y te rellena a VAVAF solo.</p>
-<input type="file" id="pdfInput" accept=".pdf">
-<div id="pdfStatus" style="font-size:13px;margin-top:6px;color:#ffcc00"></div>
+  <h1>⚔️ Tira y Muere ⚔️</h1>
+  <div class="subtitle"><b>Tira y Muere</b> es un simulador de combate para D&D 5e que utiliza el método Monte Carlo para evaluar un encuentro antes de jugarlo. Configura combatientes, enemigos y condiciones, y el sistema simula el mismo combate 10,000 veces para estimar la probabilidad de victoria, derrota, duración y resultados por objetivo.</div>
+
+  <!-- IMPORTAR PDF - NUEVO, SOLO AÑADIDO -->
+  <div class="seccion">
+    <h3>📄 Importar PDF de Nivel20</h3>
+    <p style="font-size:13px;color:#5a3a1a;margin:4px 0">Sube tu hoja de Nivel20 (como la de Vavaf) y te rellena a Vavaf en la Party.</p>
+    <input type="file" id="pdfInput" accept=".pdf" style="display:none">
+    <button type="button" class="preset-btn" onclick="document.getElementById('pdfInput').click()">📄 Elegir PDF de personaje</button>
+    <div id="pdfStatus" style="font-size:13px;color:#6b1a00;margin-top:8px"></div>
+  </div>
+
+  <!-- PRESETS - IGUAL QUE ANTES -->
+  <div class="seccion">
+    <h3>🍺 Presets de la Taberna - Un click y ya está</h3>
+    <div class="fila">
+      <button type="button" class="preset-btn" onclick="preset('bandidos')">🏘️ La Vecindad<br><small>8 Bandidos - Derrotar</small></button>
+      <button type="button" class="preset-btn" onclick="preset('jabalies')">🐗 La Cacería<br><small>3 Jabalís - Capturar</small></button>
+    </div>
+  </div>
+
+  <!-- MODO DE JUEGO - IGUAL QUE ANTES -->
+  <div class="seccion">
+    <h3>🎲 ¿Cómo vas a jugar esta pelea?</h3>
+    <label>Modo de juego / Escenario</label>
+    <select id="modo">
+      <option value="optimo">⚔️ Óptimo - Juegas perfecto, ventaja siempre, veneno desde turno 1</option>
+      <option value="normal" selected>😐 Normal - Juegas como lo pusiste arriba</option>
+      <option value="relajados">😌 Relajados - Sin veneno, sin ventaja, pegas tranqui</option>
+      <option value="mosca">🪰 ¡Uh! Una Mosca - Te distraes 1 de cada 4 turnos y pegas random</option>
+    </select>
+    <div id="modoInfo" style="font-size:13px;color:#5a3a1a;margin-top:6px">Normal: usa tus números tal cual.</div>
+  </div>
+
+  <!-- PARTY - NUEVO, REEMPLAZA "TU PERSONAJE" PERO CON MISMA ESTETICA -->
+  <div class="seccion">
+    <h3>🛡️ Party - 4 Personajes</h3>
+    <div class="fila" style="grid-template-columns:1fr 1fr 1fr 1fr">
+      <button type="button" class="preset-btn party-tab active" onclick="showPlayer(0)">VAVAF</button>
+      <button type="button" class="preset-btn party-tab" onclick="showPlayer(1)">KORGATH</button>
+      <button type="button" class="preset-btn party-tab" onclick="showPlayer(2)">NYX</button>
+      <button type="button" class="preset-btn party-tab" onclick="showPlayer(3)">ZERO</button>
+    </div>
+    <div id="partyInfo" style="font-size:13px;color:#5a3a1a;margin-top:8px"></div>
+    <div id="playerFields"></div>
+    <div style="font-size:13px;color:#5a3a1a;margin-top:10px">La simulación usa a los 4 juntos. El total de HP de la Party es la suma de los 4.</div>
+  </div>
+
+  <!-- ENEMIGO - IGUAL QUE ANTES -->
+  <div class="seccion">
+    <h3>🐗 El Enemigo</h3>
+    <div class="fila">
+      <div><label>Nombre del enemigo</label><input type="text" id="nombreEnemigo" value="Jabalí"></div>
+      <div><label>¿Cuántos enemigos son?</label><input type="number" id="cantEnemigos" value="3" min="1" max="10"></div>
+    </div>
+    <div class="fila">
+      <div><label>Vida de CADA enemigo (HP)</label><input type="number" id="enemigoHP" value="35" min="1"></div>
+      <div><label>Armadura de CADA enemigo (CA)</label><input type="number" id="enemigoCA" value="13" min="5"></div>
+    </div>
+    <div class="fila3">
+      <div><label>Bono del enemigo</label><input type="number" id="enemigoBono" value="5"></div>
+      <div><label>Daño del enemigo (ej: 2d6+2)</label><input type="text" id="enemigoDano" value="2d6+2"></div>
+      <div><label>Ataques por turno del enemigo</label><input type="number" id="enemigoAtaques" value="1" min="1" max="4"></div>
+    </div>
+    <label>¿Cuál es tu objetivo?</label>
+    <select id="objetivo">
+      <option value="derrotar">Derrotar a todos</option>
+      <option value="capturar">Capturar - intentar atrapar cuando tenga poca vida</option>
+    </select>
+  </div>
+
+  <label>Número de simulaciones:</label>
+  <input type="number" id="simulaciones" value="10000" min="100" max="20000">
+  <button onclick="simular()">⚔️ ¡TIRA LOS DADOS! ⚔️</button>
+  <div id="frase">Aquí te voy a decir cuántas veces te mueres si peleas esto.</div>
+
+  <div class="stats">
+    <div class="stat"><span>Prob. de Ganar</span><b id="win">-</b></div>
+    <div class="stat"><span>Prob. de Morir</span><b id="lose">-</b></div>
+    <div class="stat"><span>Rondas promedio</span><b id="rondas">-</b></div>
+    <div class="stat"><span>Vida con la que quedas</span><b id="vidaRest">-</b></div>
+  </div>
+  <div class="stats2">
+    <div class="stat2"><span>Derrotados en promedio</span><b id="derrotados">-</b></div>
+    <div class="stat2"><span>Capturados en promedio</span><b id="capturados">-</b></div>
+    <div class="stat2"><span>Daño que te hacen</span><b id="danoRecibido">-</b></div>
+  </div>
+  <canvas id="grafico" width="800" height="300"></canvas>
+  <div id="resultado"></div>
 </div>
-
-<div class="tabs">
-<button class="tab active" onclick="showPlayer(0)">VAVAF</button>
-<button class="tab" onclick="showPlayer(1)">KORGATH</button>
-<button class="tab" onclick="showPlayer(2)">NYX</button>
-<button class="tab" onclick="showPlayer(3)">ZERO</button>
-</div>
-
-<div id="playerCard" class="card"></div>
-
-<div class="card">
-<h3>⚔️ Enemigos</h3>
-<div class="grid">
-<div><label>Bandidos (cantidad)</label><input id="enemigos" type="number" value="8"></div>
-<div><label>HP Bandido</label><input id="hpEnemigo" type="number" value="11"></div>
-<div><label>CA Bandido</label><input id="caEnemigo" type="number" value="12"></div>
-<div><label>Jabalís</label><input id="jabalis" type="number" value="3"></div>
-</div>
-</div>
-
-<button class="big" onclick="simular()">🎲 ¡SIMULAR PELEA DE LA PARTY!</button>
-<button class="gold" onclick="location.reload()">↻ Resetear</button>
-
-<div id="log">Esperando dados...</div>
 
 <script>
-const presets = [
-{name:"VAVAF - El Que Dudó", clase:"Monje 9, Pícaro 2, Mago 1", raza:"Mediano Piesligeros", hp:92, ca:12, bono:5, dano:"1d10", ataques:3, dot:0, fue:13, des:14, con:11, int:14, sab:10, car:13, historia:"Monje de Petra. Descubrió que los dioses están aprisionados."},
-{name:"KORGATH - El Rompe-Reinos", clase:"Bárbaro 8, Guerrero 4", raza:"Semiorco", hp:128, ca:15, bono:8, dano:"1d8+4", ataques:2, dot:0, fue:18, des:13, con:16, int:10, sab:12, car:8, historia:"Ex-guardia del templo falso. Quemó su uniforme."},
-{name:"NYX - La Hija del Fuego", clase:"Mago 9, Brujo 3", raza:"Elfa", hp:68, ca:13, bono:7, dano:"1d8+3", ataques:1, dot:3, fue:8, des:14, con:13, int:17, sab:12, car:14, historia:"Escucha la voz de Petra en sueños."},
-{name:"ZERO - El Fantasma", clase:"Pícaro 9, Monje 3", raza:"Mediano Piesligeros", hp:84, ca:15, bono:7, dano:"1d6+3", ataques:2, dot:2, fue:10, des:17, con:12, int:13, sab:14, car:11, historia:"Ladrón del templo. Vavaf lo dejó ir."}
-];
-let players = JSON.parse(JSON.stringify(presets));
-let current = 0;
+function tirarDado(caras){ return Math.floor(Math.random()*caras)+1; }
+function parseDano(str){
+  str=(str||"1d6").toLowerCase().replace(/\s/g,'');
+  let bonus=0; if(str.includes('+')){let p=str.split('+'); str=p[0]; bonus=parseInt(p[1])||0;}
+  if(str.includes('-')){let p=str.split('-'); str=p[0]; bonus=-(parseInt(p[1])||0);}
+  let m=str.match(/(\d*)d(\d+)/); if(!m) return {n:1,caras:6,bonus:0};
+  return {n:parseInt(m[1])||1, caras:parseInt(m[2]), bonus:bonus};
+}
+function tirarDano(str, critico){
+  let d=parseDano(str), total=d.bonus, veces=critico?d.n*2:d.n;
+  for(let i=0;i<veces;i++) total+=tirarDado(d.caras); return total;
+}
+function ataque(bono, danoStr, ventaja, CA){
+  let t1=tirarDado(20), t2=tirarDado(20);
+  let tirada=ventaja?Math.max(t1,t2):t1;
+  if(tirada===1) return 0;
+  if(tirada===20 || tirada+bono>=CA) return tirarDano(danoStr, tirada===20);
+  return 0;
+}
+const percentil=(arr,p)=>{const s=[...arr].sort((a,b)=>a-b); return s[Math.max(0,Math.floor(s.length*p/100)-1)];};
 
+// --- PARTY DE 4 - SOLO AÑADIDO, MISMO MODELO QUE TU HOJA DE VAVAF NIVEL 12 ---
+const partyPresets = [
+  {name:"VAVAF", apodo:"El Que Dudó", clase:"Monje 9, Pícaro 2, Mago 1", raza:"Mediano Piesligeros", hp:92, ca:12, bono:5, dano:"1d10", ataques:3, dot:0, fue:13, des:14, con:11, int:14, sab:10, car:13, historia:"Monje de Petra. Descubrió que los dioses están aprisionados."},
+  {name:"KORGATH", apodo:"El Rompe-Reinos", clase:"Bárbaro 8, Guerrero 4", raza:"Semiorco", hp:128, ca:15, bono:8, dano:"1d8+4", ataques:2, dot:0, fue:18, des:13, con:16, int:10, sab:12, car:8, historia:"Ex-guardia del templo falso. Quemó su uniforme."},
+  {name:"NYX", apodo:"La Hija del Fuego", clase:"Mago 9, Brujo 3", raza:"Elfa", hp:68, ca:13, bono:7, dano:"1d8+3", ataques:1, dot:3, fue:8, des:14, con:13, int:17, sab:12, car:14, historia:"Escucha la voz de Petra en sueños."},
+  {name:"ZERO", apodo:"El Fantasma", clase:"Pícaro 9, Monje 3", raza:"Mediano Piesligeros", hp:84, ca:15, bono:7, dano:"1d6+3", ataques:2, dot:2, fue:10, des:17, con:12, int:13, sab:14, car:11, historia:"Ladrón del templo. Vavaf lo dejó ir."}
+];
+let players = JSON.parse(JSON.stringify(partyPresets));
+let currentPlayer = 0;
 function showPlayer(i){
-  current = i;
-  document.querySelectorAll('.tab').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+  currentPlayer = i;
+  document.querySelectorAll('.party-tab').forEach((b,idx)=>b.classList.toggle('active', idx===i));
   let p = players[i];
-  document.getElementById('playerCard').innerHTML = `
-    <h3>${p.name}</h3><p style="font-size:13px">${p.clase} | ${p.raza}<br><i>${p.historia}</i></p>
-    <div class="grid3">
-      <div class="stat-box">FUE<br><b>${p.fue}</b><input type="number" value="${p.fue}" onchange="players[${i}].fue=+this.value"></div>
-      <div class="stat-box">DES<br><b>${p.des}</b><input type="number" value="${p.des}" onchange="players[${i}].des=+this.value"></div>
-      <div class="stat-box">CON<br><b>${p.con}</b><input type="number" value="${p.con}" onchange="players[${i}].con=+this.value"></div>
-      <div class="stat-box">INT<br><b>${p.int}</b><input type="number" value="${p.int}" onchange="players[${i}].int=+this.value"></div>
-      <div class="stat-box">SAB<br><b>${p.sab}</b><input type="number" value="${p.sab}" onchange="players[${i}].sab=+this.value"></div>
-      <div class="stat-box">CAR<br><b>${p.car}</b><input type="number" value="${p.car}" onchange="players[${i}].car=+this.value"></div>
+  let totalHP = players.reduce((s,x)=>s+x.hp,0);
+  document.getElementById('partyInfo').innerHTML = `<b>${p.name} - ${p.apodo}</b> | ${p.clase} | ${p.raza}<br><i>${p.historia}</i><br><b>Party total: ${totalHP} HP</b> | FUE ${p.fue} DES ${p.des} CON ${p.con} INT ${p.int} SAB ${p.sab} CAR ${p.car}`;
+  document.getElementById('playerFields').innerHTML = `
+    <div class="fila">
+      <div><label>Vida (HP) - ${p.name}</label><input type="number" value="${p.hp}" min="1" onchange="players[${i}].hp=+this.value;showPlayer(${i})"></div>
+      <div><label>Armadura (CA) - ${p.name}</label><input type="number" value="${p.ca}" min="5" onchange="players[${i}].ca=+this.value"></div>
     </div>
-    <div class="grid">
-      <div><label>HP</label><input type="number" value="${p.hp}" onchange="players[${i}].hp=+this.value"></div>
-      <div><label>CA</label><input type="number" value="${p.ca}" onchange="players[${i}].ca=+this.value"></div>
+    <div class="fila3">
       <div><label>Bono para pegar</label><input type="number" value="${p.bono}" onchange="players[${i}].bono=+this.value"></div>
-      <div><label>Daño (ej: 1d10, 1d8+4)</label><input type="text" value="${p.dano}" onchange="players[${i}].dano=this.value"></div>
-      <div><label>Ataques por turno</label><input type="number" value="${p.ataques}" onchange="players[${i}].ataques=+this.value"></div>
-      <div><label>Daño en el tiempo (veneno / quemadura)</label><input type="number" value="${p.dot}" onchange="players[${i}].dot=+this.value"></div>
+      <div><label>Daño (ej: 1d10)</label><input type="text" value="${p.dano}" onchange="players[${i}].dano=this.value"></div>
+      <div><label>Ataques por turno</label><input type="number" value="${p.ataques}" min="1" max="8" onchange="players[${i}].ataques=+this.value"></div>
     </div>
-  `;
+    <div class="fila">
+      <div><label>Daño en el tiempo por turno (veneno / sangrado)</label><input type="number" value="${p.dot}" min="0" onchange="players[${i}].dot=+this.value"></div>
+      <div><label>¿Ventaja al pegar?</label>
+        <select id="ventaja"><option value="0">No, tiro normal</option><option value="1">Sí, ventaja</option></select>
+      </div>
+    </div>
+    <div class="fila3">
+      <div><label>FUE</label><input type="number" value="${p.fue}" onchange="players[${i}].fue=+this.value"></div>
+      <div><label>DES</label><input type="number" value="${p.des}" onchange="players[${i}].des=+this.value"></div>
+      <div><label>CON</label><input type="number" value="${p.con}" onchange="players[${i}].con=+this.value"></div>
+    </div>
+    <div class="fila3">
+      <div><label>INT</label><input type="number" value="${p.int}" onchange="players[${i}].int=+this.value"></div>
+      <div><label>SAB</label><input type="number" value="${p.sab}" onchange="players[${i}].sab=+this.value"></div>
+      <div><label>CAR</label><input type="number" value="${p.car}" onchange="players[${i}].car=+this.value"></div>
+    </div>`;
 }
 showPlayer(0);
 
-function tirar(dado){ return Math.floor(Math.random()*dado)+1; }
-function parseDano(str){
-  let m = str.toLowerCase().match(/(\d+)d(\d+)\s*([+-]\d+)?/);
-  if(!m) return 1;
-  let n=+m[1], d=+m[2], bonus=m[3]?+m[3]:0;
-  let total=bonus;
-  for(let k=0;k<n;k++) total+=tirar(d);
-  return total;
+// --- IMPORTAR PDF - SOLO AÑADIDO ---
+document.getElementById('pdfInput').addEventListener('change', async (e)=>{
+  let file = e.target.files[0]; if(!file) return;
+  document.getElementById('pdfStatus').textContent = "Leyendo PDF...";
+  try{
+    let buf = await file.arrayBuffer();
+    let pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    let fullText = "";
+    for(let i=1;i<=pdf.numPages;i++){ let page = await pdf.getPage(i); let tc = await page.getTextContent(); fullText += tc.items.map(it=>it.str).join(" ") + "\n"; }
+    let getNum = (re)=>{ let m=fullText.match(re); return m?parseInt(m[1]):null; };
+    let hp = getNum(/Puntos de Golpe M[aá]ximos\s*(\d+)/i) || getNum(/M[aá]ximos\s*(\d+)/i);
+    let ca = getNum(/\b(\d+)\s*CA\b/i) || getNum(/CA\s*(\d+)/i);
+    let fue = getNum(/FUERZA.*?(\d{1,2})/i);
+    let des = getNum(/DESTREZA.*?(\d{1,2})/i);
+    let con = getNum(/CONSTITUCI[OÓ]N.*?(\d{1,2})/i);
+    let intv = getNum(/INTELIGENCIA.*?(\d{1,2})/i);
+    if(hp) players[0].hp = hp;
+    if(ca) players[0].ca = ca;
+    if(fue) players[0].fue = fue;
+    if(des) players[0].des = des;
+    if(con) players[0].con = con;
+    if(intv) players[0].int = intv;
+    document.getElementById('pdfStatus').textContent = `¡Listo! PDF leído: VAVAF - HP ${players[0].hp} CA ${players[0].ca} FUE ${players[0].fue} DES ${players[0].des}`;
+    showPlayer(0);
+  }catch(err){ document.getElementById('pdfStatus').textContent = "No pude leer ese PDF, intenta con otro."; }
+});
+
+function preset(tipo){
+  if(tipo==='bandidos'){
+    document.getElementById('nombreEnemigo').value='Bandido';
+    document.getElementById('cantEnemigos').value=8;
+    document.getElementById('enemigoHP').value=18;
+    document.getElementById('enemigoCA').value=12;
+    document.getElementById('enemigoBono').value=4;
+    document.getElementById('enemigoDano').value='1d6+2';
+    document.getElementById('enemigoAtaques').value=1;
+    document.getElementById('objetivo').value='derrotar';
+  }
+  if(tipo==='jabalies'){
+    document.getElementById('nombreEnemigo').value='Jabalí';
+    document.getElementById('cantEnemigos').value=3;
+    document.getElementById('enemigoHP').value=35;
+    document.getElementById('enemigoCA').value=13;
+    document.getElementById('enemigoBono').value=5;
+    document.getElementById('enemigoDano').value='2d6+2';
+    document.getElementById('enemigoAtaques').value=1;
+    document.getElementById('objetivo').value='capturar';
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+  document.getElementById('frase').textContent = tipo==='bandidos' ? '🏘️ Listo: La Vecindad - 8 Bandidos. Ahora elige tu modo y tira.' : '🐗 Listo: La Cacería - 3 Jabalís para capturar. Ahora elige tu modo y tira.';
+}
+
+document.getElementById('modo').addEventListener('change', e=>{
+  const textos={
+    optimo:'Óptimo: ventaja siempre, veneno desde turno 1, le pegas al más débil.',
+    normal:'Normal: usa tus números tal cual.',
+    relajados:'Relajados: sin veneno, sin ventaja, sin prisa.',
+    mosca:'¡Uh! Una Mosca: 1 de cada 4 turnos te distraes y pierdes tu turno, y pegas a un enemigo random.'
+  };
+  document.getElementById('modoInfo').textContent = textos[e.target.value];
+});
+
+function dibujarGrafico(datos){
+  const c=document.getElementById('grafico'), ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height); if(!datos.length) return;
+  const min=Math.min(...datos), max=Math.max(...datos), bins=20, ancho=(max-min)/bins||1, conteo=new Array(bins).fill(0);
+  datos.forEach(v=>{let i=Math.floor((v-min)/ancho); if(i>=bins) i=bins-1; conteo[i]++;});
+  const maxC=Math.max(...conteo);
+  conteo.forEach((v,i)=>{const h=(v/maxC)*(c.height-40); ctx.fillStyle='#6b1a00'; ctx.fillRect(i*(c.width/bins)+2, c.height-20-h, (c.width/bins)-4, h); ctx.fillStyle='#2b1a0e'; ctx.font='bold 11px Georgia'; ctx.fillText(v, i*(c.width/bins)+5, c.height-24-h);});
+  ctx.fillStyle='#2b1a0e'; ctx.font='12px Georgia'; ctx.fillText(min+' rondas',5,c.height-5); ctx.fillText(max+' rondas',c.width-80,c.height-5);
 }
 
 function simular(){
-  let log = "=== TIRA Y MUERE - PARTY ===\n";
-  let numEnem = +document.getElementById('enemigos').value;
-  let hpEnem = +document.getElementById('hpEnemigo').value;
-  let caEnem = +document.getElementById('caEnemigo').value;
-  let jab = +document.getElementById('jabalis').value;
-  let enemigos = [];
-  for(let i=0;i<numEnem;i++) enemigos.push({nombre:"Bandido "+(i+1), hp:hpEnem, vivo:true});
-  for(let i=0;i<jab;i++) enemigos.push({nombre:"Jabalí "+(i+1), hp:15, vivo:true});
-  log += `Enemigos: ${numEnem} bandidos + ${jab} jabalís = ${enemigos.length}\n\n`;
-  for(let ronda=1;ronda<=3;ronda++){
-    log += `--- RONDA ${ronda} ---\n`;
-    players.forEach(p=>{
-      for(let a=0;a<p.ataques;a++){
-        let vivo = enemigos.find(e=>e.vivo);
-        if(!vivo){ log+=`Ya no hay enemigos!\n`; return; }
-        let d20 = tirar(20);
-        let total = d20 + p.bono;
-        let crit = d20===20;
-        if(total >= caEnem || crit){
-          let dmg = parseDano(p.dano);
-          if(crit) dmg *= 2;
-          if(p.dot>0) dmg += p.dot;
-          vivo.hp -= dmg;
-          log += `${p.name} tira ${d20}+${p.bono}=${total} ${crit?"CRITICO!":""} -> ${dmg} daño a ${vivo.nombre} (HP queda ${Math.max(0,vivo.hp)})\n`;
-          if(vivo.hp<=0){ vivo.vivo=false; log+=`☠️ ${vivo.nombre} MUERTO!\n`; }
-        } else {
-          log += `${p.name} tira ${d20}+${p.bono}=${total} -> FALLA vs CA ${caEnem}\n`;
+  const modo=document.getElementById('modo').value;
+  const ventajaBase=document.getElementById('ventaja') ? document.getElementById('ventaja').value==="1" : false;
+  const cant=parseInt(document.getElementById('cantEnemigos').value)||3;
+  const eHPmax=parseInt(document.getElementById('enemigoHP').value)||35;
+  const eCA=parseInt(document.getElementById('enemigoCA').value)||13;
+  const eBono=parseInt(document.getElementById('enemigoBono').value)||5;
+  const eDano=document.getElementById('enemigoDano').value||"2d6+2";
+  const eAtaques=parseInt(document.getElementById('enemigoAtaques').value)||1;
+  const objetivo=document.getElementById('objetivo').value;
+  const sims=parseInt(document.getElementById('simulaciones').value)||10000;
+  const nombre=document.getElementById('nombreEnemigo').value||"Enemigo";
+  let ventajaEfectiva = ventajaBase;
+  if(modo==='optimo'){ ventajaEfectiva=true; }
+  if(modo==='relajados'){ ventajaEfectiva=false; }
+  if(modo==='mosca'){ ventajaEfectiva=false; }
+  let wins=0, rondasList=[], vidaRestList=[], derrotadosList=[], capturadosList=[], danoRecibidoList=[];
+  let capturasPorCantidad={};
+  for(let s=0;s<sims;s++){
+    let party = players.map(p=>({name:p.name, hp:p.hp, maxHp:p.hp, ca:p.ca, bono:p.bono, dano:p.dano, ataques:p.ataques, dot: modo==='optimo' ? Math.max(p.dot,2) : (modo==='relajados'||modo==='mosca' ? 0 : p.dot), vivo:true}));
+    let enemigos=[]; for(let i=0;i<cant;i++) enemigos.push({hp:eHPmax, vivo:true, capturado:false});
+    let ronda=0, derrotados=0, capturados=0, danoRecibido=0;
+    while(party.some(p=>p.vivo) && (derrotados+capturados<cant) && ronda<50){
+      ronda++;
+      let distraido = (modo==='mosca' && Math.random()<0.25);
+      if(!distraido){
+        for(let pj of party){
+          if(!pj.vivo) continue;
+          for(let a=0;a<pj.ataques;a++){
+            let target;
+            if(modo==='mosca'){
+              let vivos=enemigos.filter(e=>e.vivo && !e.capturado);
+              if(!vivos.length) break;
+              target=vivos[Math.floor(Math.random()*vivos.length)];
+            } else if(modo==='optimo'){
+              let vivos=enemigos.filter(e=>e.vivo && !e.capturado);
+              if(!vivos.length) break;
+              target=vivos.reduce((min,e)=> e.hp<min.hp?e:min);
+            } else {
+              target=enemigos.find(e=>e.vivo && !e.capturado);
+            }
+            if(!target) break;
+            if(objetivo==="capturar" && target.hp<=eHPmax*0.3){
+              let umbral = modo==='optimo'? 12 : 14;
+              if(tirarDado(20)+pj.bono>=umbral){ target.capturado=true; target.vivo=false; capturados++; continue; }
+            }
+            let dmg=ataque(pj.bono, pj.dano, ventajaEfectiva, eCA);
+            target.hp-=dmg;
+            if(target.hp<=0){ target.vivo=false; derrotados++; }
+          }
         }
+        enemigos.forEach(e=>{ if(e.vivo && !e.capturado){ let dotTotal = party.filter(p=>p.vivo).reduce((sum,p)=>sum+p.dot,0); e.hp-=dotTotal; if(e.hp<=0){e.vivo=false; derrotados++;} } });
       }
-    });
-    log += `\n`;
+      for(let e of enemigos){
+        if(!e.vivo || e.capturado) continue;
+        let vivosParty = party.filter(p=>p.vivo);
+        if(!vivosParty.length) break;
+        for(let a=0;a<eAtaques;a++){
+          let objetivoPJ = vivosParty[Math.floor(Math.random()*vivosParty.length)];
+          let dmg=ataque(eBono, eDano, false, objetivoPJ.ca);
+          objetivoPJ.hp-=dmg; danoRecibido+=dmg;
+          if(objetivoPJ.hp<=0) objetivoPJ.vivo=false;
+          if(!party.some(p=>p.vivo)) break;
+        }
+        if(!party.some(p=>p.vivo)) break;
+      }
+    }
+    let ganaste=(derrotados+capturados>=cant) && party.some(p=>p.vivo);
+    if(ganaste) wins++;
+    let vidaRest = party.reduce((sum,p)=>sum+Math.max(0,p.hp),0);
+    rondasList.push(ronda); vidaRestList.push(vidaRest);
+    derrotadosList.push(derrotados); capturadosList.push(capturados); danoRecibidoList.push(danoRecibido);
+    if(objetivo==="capturar") capturasPorCantidad[capturados]=(capturasPorCantidad[capturados]||0)+1;
   }
-  let muertos = enemigos.filter(e=>!e.vivo).length;
-  log += `=== RESULTADO 3 RONDAS: ${muertos}/${enemigos.length} enemigos muertos ===\n`;
-  log += `Vavaf y su party siguen de pie. ¡A por Petra!`;
-  document.getElementById('log').textContent = log;
+  let winPct=(wins/sims*100).toFixed(1), losePct=((sims-wins)/sims*100).toFixed(1);
+  let rondasMed=(rondasList.reduce((a,b)=>a+b,0)/sims).toFixed(1);
+  let vidaMed=(vidaRestList.reduce((a,b)=>a+b,0)/sims).toFixed(1);
+  let derrotadosMed=(derrotadosList.reduce((a,b)=>a+b,0)/sims).toFixed(1);
+  let capturadosMed=(capturadosList.reduce((a,b)=>a+b,0)/sims).toFixed(1);
+  let danoMed=(danoRecibidoList.reduce((a,b)=>a+b,0)/sims).toFixed(1);
+  document.getElementById('win').textContent=winPct+'%';
+  document.getElementById('lose').textContent=losePct+'%';
+  document.getElementById('rondas').textContent=rondasMed;
+  document.getElementById('vidaRest').textContent=vidaMed;
+  document.getElementById('derrotados').textContent=derrotadosMed;
+  document.getElementById('capturados').textContent=capturadosMed;
+  document.getElementById('danoRecibido').textContent=danoMed;
+  let nombreModo={optimo:'Óptimo', normal:'Normal', relajados:'Relajados', mosca:'¡Uh! Una Mosca'}[modo];
+  document.getElementById('frase').textContent=`Modo ${nombreModo} - Party vs ${cant} ${nombre}(s): ganas el ${winPct}% y te mueres el ${losePct}%.`;
+  let htmlCaptura='';
+  if(objetivo==="capturar"){
+    htmlCaptura='<div style="margin-top:12px;background:#fff8d6;padding:10px;border-radius:8px;border:1px solid #c9a227"><b>🎯 ¿Cuántos atrapas?</b><br>';
+    for(let i=cant;i>=0;i--){ let pct=((capturasPorCantidad[i]||0)/sims*100).toFixed(1); htmlCaptura+=`Atrapas ${i} de ${cant}: <b>${pct}%</b><br>`; }
+    htmlCaptura+='</div>';
+  }
+  document.getElementById('resultado').innerHTML=
+    `<div><b>Resultado en modo ${nombreModo}:</b> Tu Party peleó contra <b>${cant} ${nombre}(s)</b> ${sims.toLocaleString()} veces.</div>`+
+    `<div style="margin-top:8px">Ganas <b>${winPct}%</b>, pierdes <b>${losePct}%</b>. Dura <b>${rondasMed} rondas</b> en promedio, te quedas con <b>${vidaMed} HP</b> en total de la Party.</div>`+
+    `<div style="margin-top:8px">Derrotas <b>${derrotadosMed}</b>, capturas <b>${capturadosMed}</b>, te hacen <b>${danoMed}</b> de daño.</div>`+ htmlCaptura;
+  dibujarGrafico(rondasList);
 }
-
-document.getElementById('pdfInput').addEventListener('change', async (e)=>{
-  let file = e.target.files[0];
-  if(!file) return;
-  document.getElementById('pdfStatus').textContent = "Leyendo PDF...";
-  let buf = await file.arrayBuffer();
-  let pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  let fullText = "";
-  for(let i=1;i<=pdf.numPages;i++){
-    let page = await pdf.getPage(i);
-    let tc = await page.getTextContent();
-    fullText += tc.items.map(it=>it.str).join(" ") + "\n";
-  }
-  let getNum = (re)=>{ let m=fullText.match(re); return m?parseInt(m[1]):null; };
-  let hp = getNum(/Puntos de Golpe M[aá]ximos\s*(\d+)/i) || getNum(/M[aá]ximos\s*(\d+)/i);
-  let ca = getNum(/\b(\d+)\s*CA\b/i) || getNum(/CA\s*(\d+)/i);
-  let fue = getNum(/FUERZA.*?(\d{1,2})/i);
-  let des = getNum(/DESTREZA.*?(\d{1,2})/i);
-  let con = getNum(/CONSTITUCI[OÓ]N.*?(\d{1,2})/i);
-  let intv = getNum(/INTELIGENCIA.*?(\d{1,2})/i);
-  if(hp) players[0].hp = hp;
-  if(ca) players[0].ca = ca;
-  if(fue) players[0].fue = fue;
-  if(des) players[0].des = des;
-  if(con) players[0].con = con;
-  if(intv) players[0].int = intv;
-  document.getElementById('pdfStatus').textContent = `¡Listo! PDF leído: VAVAF - HP ${players[0].hp} CA ${players[0].ca} FUE ${players[0].fue} DES ${players[0].des}`;
-  showPlayer(0);
-  alert("PDF importado a VAVAF. Ya puedes simular con tus stats reales.");
-});
 </script>
+<a href="https://ko-fi.com/sasukeloco2313" target="_blank" rel="noopener" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: #6b1a00; color: #f5e6c8; padding: 12px 20px; border-radius: 50px; font-family: Georgia, serif; font-weight: bold; font-size: 15px; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; border:2px solid #c9a227;">🍺 Invítame una hidromiel</a>
 </body>
 </html>
