@@ -86,6 +86,19 @@
     </div>
     <div id="enemyPoolList" style="margin-top:10px"></div>
   </div>
+  <div class="seccion" id="srdBox">
+    <h3>📖 Manual de Monstruos SRD - Solo DM</h3>
+    <p style="font-size:13px;color:#5a3a1a;margin:4px 0">Jala del repositorio SRD. Solo lo ves tú, no sale en la vista de jugador.</p>
+    <label>Buscar monstruo SRD</label>
+    <input type="text" id="srdFiltro" placeholder="Escribe: goblin, ogre, dragon..." oninput="filtrarSRD()">
+    <label>Monstruo SRD</label>
+    <select id="srdSelect" onchange="cargarSRDMonstruo()"><option value="">Cargando manual...</option></select>
+    <div id="srdInfo" style="font-size:13px;color:#5a3a1a;margin-top:8px">Cargando lista SRD...</div>
+    <div class="fila">
+      <button type="button" class="preset-btn" onclick="cargarSRDMonstruo(true)">⚔️ Usar en esta pelea</button>
+      <button type="button" class="preset-btn" onclick="agregarSRDAlPool()">➕ Agregar al Pool de Enemigos</button>
+    </div>
+  </div>
   <div class="seccion">
     <h3>🎲 ¿Cómo vas a jugar esta pelea?</h3>
     <label>Modo de juego / Escenario</label>
@@ -162,7 +175,7 @@
     <option value="optimo">⚔️ Óptimo - Jugamos bien</option>
     <option value="normal" selected>😐 Normal - Como siempre</option>
     <option value="relajados">😌 Relajado - Andamos valiendo madre</option>
-    <option value="mosca">🪰 Mosca - Cada quien por su lado</option>
+    <option value="mosca">🪰 Uh! Una Mosca - Cada quien por su lado</option>
   </select>
   <div class="lista-modos" id="lista-modos">Calculando...</div>
   <div class="btn-fila">
@@ -182,7 +195,7 @@ function parseDano(s){ s=(s||"1d6").toLowerCase().replace(/\s/g,''); let b=0; if
 function tirarDano(s,crit){ let d=parseDano(s),t=d.bonus,v=crit?d.n*2:d.n; for(let i=0;i<v;i++) t+=tirarDado(d.caras); return t; }
 function ataque(b,d,v,CA){ let t1=tirarDado(20),t2=tirarDado(20),tir=v?Math.max(t1,t2):t1; if(tir===1) return 0; if(tir===20||tir+b>=CA) return tirarDano(d,tir===20); return 0; }
 const partyPresets=[
- {name:"VAVAF",apodo:"El Que Dudó",clase:"Monje 9, Pícaro 2, Mago 1",raza:"Mediano Piesligeros",hp:92,ca:12,bono:5,dano:"1d10",ataques:3,dot:0,fue:13,des:14,con:11,int:14,sab:10,car:13,historia:"Monje de Petra. Descubrió que los dioses están aprisionados.",activo:true},
+ {name:"VAVAF",apodo:"El Monje",clase:"Monje 9, Pícaro 2, Mago 1",raza:"Mediano Piesligeros",hp:92,ca:12,bono:5,dano:"1d10",ataques:3,dot:0,fue:13,des:14,con:11,int:14,sab:10,car:13,historia:"Monje de Petra. Descubrió que los dioses están aprisionados.",activo:true},
  {name:"KORGATH",apodo:"El Rompe-Reinos",clase:"Bárbaro 8, Guerrero 4",raza:"Semiorco",hp:128,ca:15,bono:8,dano:"1d8+4",ataques:2,dot:0,fue:18,des:13,con:16,int:10,sab:12,car:8,historia:"Ex-guardia del templo falso. Quemó su uniforme.",activo:true},
  {name:"NYX",apodo:"La Hija del Fuego",clase:"Mago 9, Brujo 3",raza:"Elfa",hp:68,ca:13,bono:7,dano:"1d8+3",ataques:1,dot:3,fue:8,des:14,con:13,int:17,sab:12,car:14,historia:"Escucha la voz de Petra en sueños.",activo:true},
  {name:"ZERO",apodo:"El Fantasma",clase:"Pícaro 9, Monje 3",raza:"Mediano Piesligeros",hp:84,ca:15,bono:7,dano:"1d6+3",ataques:2,dot:2,fue:10,des:17,con:12,int:13,sab:14,car:11,historia:"Ladrón del templo. Vavaf lo dejó ir.",activo:true}
@@ -263,15 +276,95 @@ function simular(modoForzado, silencioso){
  document.getElementById('resultado').innerHTML='<div><b>Resultado en modo '+nomModo+':</b> Tu Pool peleó contra <b>'+cant+' '+nombre+'(s)</b> '+sims.toLocaleString()+' veces.</div><div style="margin-top:8px">Ganas <b>'+winPct+'%</b>, pierdes <b>'+losePct+'%</b>. Dura <b>'+rondasMed+' rondas</b>, te quedas con <b>'+vidaMed+' HP</b>.</div>'+tabla+htmlCap+htmlCaos;
 }
 
+/* ===== MANUAL SRD - Solo DM, no toca simular() ===== */
+let srdLista = [];
+let srdFiltrada = [];
+async function cargarSRDLista(){
+  const sel = document.getElementById('srdSelect');
+  const info = document.getElementById('srdInfo');
+  try{
+    const r = await fetch('https://www.dnd5eapi.co/api/monsters');
+    const j = await r.json();
+    srdLista = j.results;
+    srdFiltrada = srdLista;
+    pintarSRDSelect();
+    info.textContent = 'Manual listo: ' + srdLista.length + ' monstruos SRD.';
+  }catch(e){
+    info.textContent = 'No pude cargar el repo SRD. Revisa tu internet.';
+    sel.innerHTML = '<option value="">Error al cargar</option>';
+  }
+}
+function pintarSRDSelect(){
+  const sel = document.getElementById('srdSelect');
+  sel.innerHTML = srdFiltrada.map(m=>'<option value="'+m.index+'">'+m.name+'</option>').join('');
+  if(srdFiltrada.length) cargarSRDMonstruo();
+}
+function filtrarSRD(){
+  const q = document.getElementById('srdFiltro').value.toLowerCase().trim();
+  srdFiltrada = q ? srdLista.filter(m=>m.name.toLowerCase().includes(q)) : srdLista;
+  pintarSRDSelect();
+}
+async function cargarSRDMonstruo(usarAhora){
+  const idx = document.getElementById('srdSelect').value;
+  if(!idx) return;
+  const info = document.getElementById('srdInfo');
+  info.textContent = 'Cargando...';
+  try{
+    const r = await fetch('https://www.dnd5eapi.co/api/monsters/' + idx);
+    const m = await r.json();
+    let dano = '1d6+0', bono = 3, ataques = 1;
+    const act = (m.actions||[]).find(a=>a.damage && a.damage.length);
+    if(act){
+      dano = act.damage[0].damage_dice || dano;
+      bono = act.attack_bonus || bono;
+    }
+    const multi = (m.actions||[]).find(a=>a.name==='Multiattack');
+    if(multi) ataques = 2;
+    const datos = {
+      name: m.name,
+      hp: m.hit_points,
+      ca: (m.armor_class && m.armor_class[0]) ? m.armor_class[0].value : 12,
+      bono: bono,
+      dano: dano,
+      ataques: ataques,
+      cant: 1,
+      objetivo: 'derrotar',
+      etiqueta: '📖 SRD'
+    };
+    info.innerHTML = '<b>'+m.name+'</b> | HP '+datos.hp+' | CA '+datos.ca+' | Bono +'+datos.bono+' | Daño '+datos.dano+' | CR '+m.challenge_rating+'<br><i>'+(m.size+' '+m.type)+'</i>';
+    window._srdActual = datos;
+    if(usarAhora){
+      document.getElementById('nombreEnemigo').value = datos.name;
+      document.getElementById('cantEnemigos').value = datos.cant;
+      document.getElementById('enemigoHP').value = datos.hp;
+      document.getElementById('enemigoCA').value = datos.ca;
+      document.getElementById('enemigoBono').value = datos.bono;
+      document.getElementById('enemigoDano').value = datos.dano;
+      document.getElementById('enemigoAtaques').value = datos.ataques;
+      document.getElementById('objetivo').value = datos.objetivo;
+      info.textContent += ' ✅ Cargado en El Enemigo, ya puedes tirar los dados.';
+    }
+  }catch(e){ info.textContent = 'No pude cargar ese monstruo.'; }
+}
+function agregarSRDAlPool(){
+  if(!window._srdActual){ alert('Primero elige un monstruo SRD'); return; }
+  const d = window._srdActual;
+  enemyPool.push({name:d.name,hp:d.hp,ca:d.ca,bono:d.bono,dano:d.dano,ataques:d.ataques,cant:d.cant,objetivo:d.objetivo,etiqueta:'📖 SRD'});
+  currentEnemyPool = enemyPool.length - 1;
+  renderPool();
+  cargarEnemigoPool();
+  document.getElementById('srdInfo').textContent += ' ✅ Agregado al Pool.';
+}
+cargarSRDLista();
+
 /* ===== VISTA JUGADOR / LINK DM <-> JUGADOR - Solo 4 modos ===== */
 const MODOS_JUGADOR = [
   { valor: "optimo", etiqueta: "⚔️ Óptimo - Jugamos bien" },
   { valor: "normal", etiqueta: "😐 Normal - Como siempre" },
   { valor: "relajados", etiqueta: "😌 Relajado - Andamos valiendo madre" },
-  { valor: "mosca", etiqueta: "🪰 Mosca - Cada quien por su lado" }
+  { valor: "mosca", etiqueta: "🪰 Uh! Una Mosca - Cada quien por su lado" }
 ];
 let probsJugador = {};
-
 function encodeState(){
   const estado = {
     players: players,
@@ -309,7 +402,7 @@ function actualizarProbJugador(){
   document.getElementById('prob-jugador').innerHTML = prob + '%<small>de sobrevivir en modo ' + modoSel + '</small>';
   let reco = "¿Peleas o Huyes?";
   if(prob >= 70) reco = "🟢 DALE, SÍ SE PUEDE - Peleen";
-  else if(prob >= 40) reco = "🟡 ESTÁ RIESGOSO - Piensen bien";
+  else if(prob >= 40) reco = "🟡 ESTÁ RIESGOSO - ¿Se la juegan?";
   else if(prob >= 20) reco = "🟠 ESTÁ CABRÓN - Mejor huyan";
   else reco = "🔴 HUYAN - Nos van a hacer mierda";
   document.getElementById('reco-jugador').textContent = reco;
@@ -352,7 +445,6 @@ function initVista(){
   const ko = document.querySelector('a[href*="ko-fi"]'); if(ko) ko.style.display = 'none';
   document.getElementById('vista-jugador').style.display = 'block';
   document.getElementById('lista-modos').textContent = 'Calculando los 4 modos...';
-  // Calcula los 4 modos en silencio, sin mostrar stats
   setTimeout(()=>{
     probsJugador = {};
     MODOS_JUGADOR.forEach(m => { probsJugador[m.valor] = simular(m.valor, true); });
